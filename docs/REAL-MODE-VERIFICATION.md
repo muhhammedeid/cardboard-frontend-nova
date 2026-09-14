@@ -66,10 +66,15 @@ Raw captures of every call live in `~/nova-probes/*.json`; 41 of them were conve
 ```
 npm run typecheck   # 0 errors
 npm run lint        # 0 warnings (--max-warnings=0)
-npm run test        # 13 files / 76 tests passed
+npm run test        # 14 files / 80 tests passed
 npm run build       # real bundle ✓ (mock mode refused by design)
 npm run build:mock  # fixture bundle ✓
+git diff --check    # clean
 ```
+
+The suite covers the transport contract (paths, args, DTO mapping against live-captured payloads), operator error
+text, the session gate, the production config guard, the select component, and the **mock runtime** — fixture mode
+is the demo path, so it is held to the same shapes (`src/services/mocks/services.spec.ts`).
 
 Production-shaped verification (built `dist/` served by `serve.py` with a same-origin `/api` proxy):
 
