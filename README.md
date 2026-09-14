@@ -6,8 +6,9 @@
 
 > **قرار المنتج:** هذه الواجهة هي **المعتمدة** بديلًا كاملًا عن `frontend/` القديمة.
 > وقد **أُخرجت الواجهة القديمة فعليًا** من مستودع الـbackend: نُقلت إلى
-> `D:\Mohamed\cardboard-bench\legacy-frontend\` (مع `ARCHIVE-NOTE.md` الذي يشرح سبب النقل وأمر الإرجاع)،
-> وحُذفت `frontend/` و`docs/frontend/` من التطبيق. لا شيء في التطبيق — ولا اختبار واحد — كان يشير إليها.
+> `D:\Mohamed\cardboard-bench\legacy-frontend\` (مع `ARCHIVE-NOTE.md` الذي يشرح سبب النقل وأمر الإرجاع).
+> ومستندات عقود الـAPI التي كانت في `docs/frontend/` **بقيت في المشروع** (ستة اختبارات تقرأها كعقد مُلزِم)
+> لكن في مسار محايد `docs/api-contracts/` بعد تحديث تلك الاختبارات — فلا وجود لمجلد باسم `frontend` في المستودع.
 
 - Stack: Vue 3.5 + Vite 8 + TypeScript (strict) + Pinia + Vue Router
 - RTL‑first، عربي، Light + Dark + System

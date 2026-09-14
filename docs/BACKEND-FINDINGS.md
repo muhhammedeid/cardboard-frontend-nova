@@ -212,9 +212,17 @@ artefact is the **Print Format** document, which was re-imported into the site w
 
 ## Repository state after this pass
 
-* The retired SPA was moved out of the app repo (`frontend/` and `docs/frontend/` staged as deletions) to
-  `D:\Mohamed\cardboard-bench\legacy-frontend\` — see its `ARCHIVE-NOTE.md`. Nothing in the app, and no test,
-  referenced those files (`git grep` verified), so the app suite is unaffected.
+* The retired SPA was moved out of the app repo (`frontend/` and its `docs/frontend/` folder staged as deletions)
+  to `D:\Mohamed\cardboard-bench\legacy-frontend\` — see its `ARCHIVE-NOTE.md`. Nothing in the app referenced the
+  SPA's code.
+* **The contract documents were not deleted:** six test modules (`test_*_contract.py`) read
+  `docs/frontend/*-contract.md` as their enforced contract, so those six documents were restored at the neutral
+  path `docs/api-contracts/` and the six tests now read from there. The app suite proves it: **294 tests OK**.
 * The app's `cardboard_management/cardboard_management/api/` package was previously **untracked in git** (every
-  service module this frontend consumes); it is now staged with `git add`, so it can be reviewed and committed
-  alongside the wrappers it belongs to.
+  service module this frontend consumes); it is now staged with `git add`, together with the contract documents and
+  the app test modules, so the whole backend contract can be reviewed and committed in one step.
+
+### Staged in the app repo (not committed)
+`8` additions (`api/` service modules) · `6` additions (`docs/api-contracts/`) · `6` modified tests (contract path)
+· `62` deletions (the retired SPA's tracked files) · `13` pre-existing untracked test modules now staged as well.
+Unstage everything with `git restore --staged .` (the working tree is untouched by that command).
