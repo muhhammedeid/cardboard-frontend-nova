@@ -7,3 +7,7 @@ dist-ssr
 .vite
 *.tsbuildinfo
 coverage
+
+# python tooling
+__pycache__/
+*.pyc

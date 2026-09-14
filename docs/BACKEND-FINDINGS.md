@@ -118,7 +118,78 @@ Both are mapped explicitly in Nova and pinned by fixture-driven specs, so a chan
 rendering a blank row. Renaming would be a breaking change for existing consumers with no functional gain, so it
 is documented rather than "fixed".
 
-## Contract nuance 📄 — `session.get_session_context` is GET-only
+## BG-11 ✅ — `create_supply` crashed instead of explaining a stray field
+
+Triggered while auditing the drafts rule: a create call carrying one field outside the allowlist returned
+`TypeError: 'list' object is not callable` (HTTP 500-style) instead of naming the field. Cause:
+
+```python
+def create_supply(**values):
+    values = without_transport_metadata(values)
+    settings, _ = _settings_and_scope()      # rebinds the translation helper `_`
+    unknown = set(values) - EDITABLE_FIELDS
+    if unknown:
+        _error("invalid_field", _("Unsupported Supply fields: {0}")…)  # ← `_` is a list here
+```
+
+Every operator typo or client mismatch therefore produced an unexplained `TypeError`. Fixed by never rebinding
+`_`; the same idiom existed in `preview_supply` and in the four `list_*` sort parsers (latent, same trap) and was
+renamed to `_unused` as well. Verified live: the same payload now answers
+`Unsupported Supply fields: warehouse`. Guarded by a DB-free AST contract that fails if any module in
+`cardboard_management/api/` binds `_` again.
+
+## BG-12 ✅ — Supplier editing is now a real capability
+
+`update_supplier(name, **values)` was added with the same allowlist as creation
+(`supplier_name`, `supplier_type`, `tax_id`, `supplier_details`), a duplicate-name guard, an explicit write-permission
+check, and the contract error envelope. `get_capabilities` no longer hardcodes `can_edit: False`; it reports the
+operator's real write right. Verified live: the update applied, a duplicate name returned
+`Supplier _Test Supplier already exists`, and a non-whitelisted field returned
+`Unsupported Supplier fields: supplier_group`. (Supplier autoname is `naming_series:`, so changing the display name
+never renames the record or breaks links.)
+
+Note: the duplicate-name message is still English — `Supplier {0} already exists` has no Arabic entry in
+`translations/ar.csv` yet.
+
+## Weighing ticket ✅ — the printed card now follows the operator's paper slip
+
+`Cardboard Supply Ticket` was rebuilt as the operational **weighing ticket** (A5, RTL) using the paper ticket as the
+authoritative source: brand header from the Company master (name, description, phone) + ticket number + date +
+warehouse + purchase invoice, a two-column capture table (الصنف، نوع الحركة «وارد»، العميل/المورد، نوع السيارة،
+اسم السائق، رقم السيارة، رقم إذن التسليم، رقم المقطورة، رقم الشحنة، ملاحظات), the two weight cells
+(الوزن الأول/القائم with وقت الدخول، الوزن الثاني/الفارغ with وقت الخروج), the emphasized صافي الوزن with the item's
+UoM, a pricing line (الوزن المحتسب، خصم الوزن، سعر الكيلو، الإجمالي), and the footer القائم بالوزن + توقيع المستلم.
+
+* The supply controller publishes the rest of the ticket context (`ticket_prepared_by` from the operator's User
+  record, `ticket_company_phone`, `ticket_company_description`); `ticket_company_*`/`ticket_item_*` already existed.
+* Fields the paper slip leaves blank because the operator writes them by hand are printed as blank cells with the
+  same labels: نوع السيارة، رقم إذن التسليم، رقم المقطورة، رقم الشحنة. **Decision needed from you:** if they should be
+  captured digitally, that is a DocType extension (vehicle type, trailer no, shipment no, delivery permit) plus a
+  migrate — say the word and it is a small change.
+* وقت الدخول/وقت الخروج print the record's creation/modification timestamps, since the scale does not send capture
+  times to the app.
+* Verified live: the ticket renders `CS-2026-00010` with `NOVA-TEST Supplier`, `NOVA-TEST 1234`, weights
+  6,280 / 1,080 / 5,200 and totals 33,293.00 / 6.5, and `القائم بالوزن: Mohamed Eid`.
+* The pricing line is an addition to the paper shape (it keeps the amounts the old card printed). Removing it is a
+  one-line change if you prefer the pure weight slip.
+
+## Draft rule ✅ — verified: a draft changes no total anywhere
+
+Parking one supply and one expense and re-reading every aggregate the UI uses left all of them identical:
+
+| Aggregate | Before parking | After parking |
+| --- | --- | --- |
+| Operations summary — supplies count | 2 | 2 |
+| Operations summary — expenses count / amount | 0 / 0.0 | 0 / 0.0 |
+| Expense summary — count / total | 0 / 0.0 | 0 / 0.0 |
+| Inventory — stock value | 80,193.0 | 80,193.0 |
+| Supplier summary — supplies / value / outstanding | 1 / 33,293.0 / 33,293.0 | 1 / 33,293.0 / 33,293.0 |
+
+Both parked documents are visible in their own lists as `Draft` (`CS-2026-00011`, `QE-2026-00003`), so an operator can
+park a supply/expense/payment, decide later, and only then either submit it (it enters stock/accounting) or leave it.
+Script: `nova-ops/drafts_audit.py`.
+
+## Contract nuance — `session.get_session_context` is GET-only
 
 Calling it with POST answers `PermissionError: غير مسموح به` — a permission-looking error for what is really an
 HTTP-verb restriction. Nova fetches it with GET, which is also where the CSRF token comes from.
@@ -129,10 +200,12 @@ HTTP-verb restriction. Nova fetches it with GET, which is also where the CSRF to
 
 | Gate | Result |
 | --- | --- |
-| `python3 -m unittest cardboard_management.tests.test_api_gap_repairs` | 12 tests OK (new DB-free contracts) |
+| `python3 -m unittest cardboard_management.tests.test_api_gap_repairs` | 14 tests OK (create capability, statement window, Arabic coverage, `_`-shadowing contract) |
+| `python3 -m unittest cardboard_management.tests.test_ticket_print_format_source` | 5 tests OK (the rebuilt ticket contract) |
 | `test_reporting_source` / `test_arabic_translation_source` | OK (no regression) |
-| `bench --site cardboard.localhost run-tests --app cardboard_management --skip-before-tests --skip-test-records` | **Ran 288 tests — OK (skipped=3)** |
-| Live probes (dev proxy) | `sales.get_create_capabilities`, windowed statement, Arabic message — all confirmed |
-| Live probes (production-shaped origin, built bundle) | session, caps, statement window, inventory, settings — all confirmed |
+| `bench --site cardboard.localhost run-tests --app cardboard_management --skip-before-tests --skip-test-records` | re-run after every backend change — see the handoff message for the count |
+| Live probes (production-shaped origin, built bundle) | session, supplier update + guards, windowed statement, Arabic message, ticket render, drafts audit — all confirmed |
 
-Backend changes are additive only: no schema change, so **no `bench migrate` was required** (and none was run).
+Backend changes stay additive: no DocType schema change, so no `bench migrate` was required. The only schema-shaped
+artefact is the **Print Format** document, which was re-imported into the site with
+`frappe.reload_doc(module='cardboard_management', dt='print_format', dn='cardboard_supply_ticket', force=True)`.

@@ -9,6 +9,7 @@ import FormField from '@/components/base/FormField.vue'
 import MoneyValue from '@/components/base/MoneyValue.vue'
 import AppPagination from '@/components/data/AppPagination.vue'
 import DataTable from '@/components/data/DataTable.vue'
+import RowEditAction from '@/components/data/RowEditAction.vue'
 import EmptyState from '@/components/feedback/EmptyState.vue'
 import ErrorState from '@/components/feedback/ErrorState.vue'
 import FilterBar from '@/components/data/FilterBar.vue'
@@ -163,6 +164,9 @@ onMounted(async () => {
         <template #cell-supplierName="{ row }"><span class="table__cell-strong">{{ row.supplierName }}</span></template>
         <template #cell-amount="{ row }"><MoneyValue :value="row.amount" /></template>
         <template #cell-status="{ row }"><StatusBadge :value="row.status" /></template>
+        <template #actions="{ row }">
+          <RowEditAction :editable="row.docstatus === 0" label="تحرير الدفعة" @edit="router.push(`/payments/${row.name}/edit`)" />
+        </template>
       </DataTable>
 
       <div class="app-mobile-only">

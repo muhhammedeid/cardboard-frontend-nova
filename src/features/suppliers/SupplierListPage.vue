@@ -9,6 +9,7 @@ import FormField from '@/components/base/FormField.vue'
 import AppBadge from '@/components/data/AppBadge.vue'
 import AppPagination from '@/components/data/AppPagination.vue'
 import DataTable from '@/components/data/DataTable.vue'
+import RowEditAction from '@/components/data/RowEditAction.vue'
 import EmptyState from '@/components/feedback/EmptyState.vue'
 import ErrorState from '@/components/feedback/ErrorState.vue'
 import FilterBar from '@/components/data/FilterBar.vue'
@@ -118,6 +119,9 @@ onMounted(() => load())
         <template #cell-supplierGroup="{ row }">{{ row.supplierGroup || '—' }}</template>
         <template #cell-disabled="{ row }">
           <AppBadge :tone="row.disabled ? 'danger' : 'success'">{{ row.disabled ? 'غير نشط' : 'نشط' }}</AppBadge>
+        </template>
+        <template #actions="{ row }">
+          <RowEditAction label="تحرير بيانات المورد" @edit="router.push(`/suppliers/${row.name}/edit`)" />
         </template>
       </DataTable>
 

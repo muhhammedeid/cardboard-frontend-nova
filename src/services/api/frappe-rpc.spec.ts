@@ -135,9 +135,9 @@ describe('FrappeRpcTransport', () => {
       ),
     )
 
-    const pending: Promise<FrontendError> = new FrappeRpcTransport('')
+    const pending = new FrappeRpcTransport('')
       .call('app.method')
-      .catch((value: unknown) => value as FrontendError)
+      .catch((value: unknown) => value as FrontendError) as Promise<FrontendError>
     await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS + 10)
     const error = await pending
 

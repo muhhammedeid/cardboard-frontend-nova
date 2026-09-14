@@ -66,29 +66,30 @@ Raw captures of every call live in `~/nova-probes/*.json`; 41 of them were conve
 ```
 npm run typecheck   # 0 errors
 npm run lint        # 0 warnings (--max-warnings=0)
-npm run test        # 14 files / 80 tests passed
-npm run build       # real bundle ✓ (mock mode refused by design)
+npm run test        # 15 files / 85 tests passed
+npm run build       # real bundle ✓ (mock mode refused by design) → dist/nova/
 npm run build:mock  # fixture bundle ✓
 git diff --check    # clean
 ```
 
 The suite covers the transport contract (paths, args, DTO mapping against live-captured payloads), operator error
-text, the session gate, the production config guard, the select component, and the **mock runtime** — fixture mode
-is the demo path, so it is held to the same shapes (`src/services/mocks/services.spec.ts`).
+text, the session gate, the production config guard, the select component, the row edit action, and the **mock
+runtime** — fixture mode is the demo path, so it is held to the same shapes
+(`src/services/mocks/services.spec.ts`).
 
-Production-shaped verification (built `dist/` served by `serve.py` with a same-origin `/api` proxy):
+Production-shaped verification (built `dist/` served by `serve.py` with a same-origin proxy that owns every Frappe
+path — `/api`, `/login`, `/app`, `/printview`, `/files`):
 
 ```
 SPA root      = 200            deep link (/suppliers/SUP-0001) = 200
-asset header  = Cache-Control: public, max-age=31536000, immutable
-session       = {user: muhamedeiddev@gmail.com, csrf_token: …}
-sales caps    = {can_create, can_submit}
-statement     = page/page_size/total/has_more + submitted_only + entries
-inventory     = state ok, one row, company/warehouse/currency from the server
-settings      = company El Nos, default warehouse, capabilities
+/nova asset   = Cache-Control: public, max-age=31536000, immutable
+/login        = 301 → /app/users  (already signed in: Frappe's own redirect)
+/printview    = the weighing ticket renders (صافي الوزن, the weights, the operator)
+api           = session + supplier update + windowed statement + Arabic rejection
 ```
 
-Backend suite for the additive API changes: `Ran 288 tests — OK (skipped=3)`.
+Backend suite after the additive API changes: `Ran 288 tests — OK (skipped=3)` (first pass) and the suite is re-run
+after every later backend edit.
 
 ## 5. Test records created on the site (cleanup)
 

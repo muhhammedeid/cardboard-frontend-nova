@@ -66,6 +66,28 @@ describe('supplier service against captured live payloads', () => {
     expect(caps.capabilities.canRead).toBe(SUPPLIER_CAPS.capabilities.can_read)
   })
 
+  it('edits a supplier through the allowlisted update service', async () => {
+    const { rpc, calls } = createRecordingTransport(SUPPLIER_DETAIL)
+
+    const updated = await createSupplierService(rpc).update('NOVA-TEST Supplier', {
+      supplierName: 'NOVA-TEST Supplier',
+      supplierType: 'Partnership',
+      taxId: '123-456-789',
+      supplierDetails: 'تم التحقق من التعديل الفردي',
+    })
+
+    expect(calls[0].method).toBe(`${API}.update_supplier`)
+    // Only the fields captured at creation travel, in the backend's own spelling.
+    expect(calls[0].args).toEqual({
+      name: 'NOVA-TEST Supplier',
+      supplier_name: 'NOVA-TEST Supplier',
+      supplier_type: 'Partnership',
+      tax_id: '123-456-789',
+      supplier_details: 'تم التحقق من التعديل الفردي',
+    })
+    expect(updated.supplierName).toBe(SUPPLIER_DETAIL.supplier_name)
+  })
+
   it('reads the server-owned merged statement window', async () => {
     const { rpc, calls } = createRecordingTransport(REPORT_SUPPLIER_STATEMENT)
     const supplier = REPORT_SUPPLIER_STATEMENT.supplier.name

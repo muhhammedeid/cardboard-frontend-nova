@@ -19,9 +19,15 @@ import { defineConfig } from 'vite'
  *
  * Consequence: open the app on the site host — http://cardboard.localhost:5173 —
  * which also makes the browser own the same host as the Frappe session cookie.
+ *
+ * Frappe keeps serving its own routes from the same origin in production
+ * (`/api`, `/login`, `/app`, `/printview`, `/files`, `/assets`), so the SPA must
+ * (a) forward those paths in dev and (b) not claim Frappe's `/assets` directory —
+ * hence `assetsDir: 'nova'`. See docs/DEPLOYMENT.md.
  */
 const SITE_HOST = 'cardboard.localhost'
 const SITE_ORIGIN = 'http://127.0.0.1:8000'
+const backendRoute = { target: SITE_ORIGIN, changeOrigin: false } as const
 
 export default defineConfig({
   plugins: [vue(), tailwindcss()],
@@ -30,15 +36,23 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  build: {
+    assetsDir: 'nova',
+  },
   server: {
     host: '0.0.0.0',
     port: 5173,
     allowedHosts: [SITE_HOST],
     proxy: {
-      '/api': {
-        target: SITE_ORIGIN,
-        changeOrigin: false,
-      },
+      '/api': { ...backendRoute },
+      // The session gate sends a signed-out operator here.
+      '/login': { ...backendRoute },
+      // Desk links returned by the app-owned form actions.
+      '/app': { ...backendRoute },
+      // The printed weighing ticket.
+      '/printview': { ...backendRoute },
+      '/files': { ...backendRoute },
+      '/private': { ...backendRoute },
     },
   },
 })

@@ -13,6 +13,7 @@ import DataTable from '@/components/data/DataTable.vue'
 import FilterBar from '@/components/data/FilterBar.vue'
 import PageHeader from '@/components/data/PageHeader.vue'
 import RecordCards from '@/components/data/RecordCards.vue'
+import RowEditAction from '@/components/data/RowEditAction.vue'
 import StatusBadge from '@/components/data/StatusBadge.vue'
 import EmptyState from '@/components/feedback/EmptyState.vue'
 import ErrorState from '@/components/feedback/ErrorState.vue'
@@ -177,6 +178,13 @@ onMounted(async () => {
         <template #cell-payableWeight="{ row }"><QuantityValue :value="row.payableWeight" unit="Kg" /></template>
         <template #cell-totalAmount="{ row }"><MoneyValue :value="row.totalAmount" /></template>
         <template #cell-status="{ row }"><StatusBadge :value="row.status" /></template>
+        <template #actions="{ row }">
+          <RowEditAction
+            :editable="row.docstatus === 0"
+            label="تحرير التوريدة"
+            @edit="router.push(`/supplies/${row.name}/edit`)"
+          />
+        </template>
       </DataTable>
 
       <div class="app-mobile-only">

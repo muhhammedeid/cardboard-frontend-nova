@@ -35,20 +35,22 @@ class SpaHandler(http.server.SimpleHTTPRequestHandler):
         sys.stderr.write("  %s\n" % (format % args))
 
     def end_headers(self) -> None:
-        if self.path.startswith("/assets/"):
+        # The hashed bundle lives under /nova/ (see vite.config.ts assetsDir): it is
+        # safe to cache forever, everything else must revalidate.
+        if self.path.startswith("/nova/"):
             self.send_header("Cache-Control", "public, max-age=31536000, immutable")
         else:
             self.send_header("Cache-Control", "no-cache")
         super().end_headers()
 
     def do_GET(self) -> None:  # noqa: N802 - base class API
-        if self._is_api():
+        if self._is_backend():
             self._proxy("GET")
             return
         super().do_GET()
 
     def do_HEAD(self) -> None:  # noqa: N802
-        if self._is_api():
+        if self._is_backend():
             self._proxy("HEAD")
             return
         super().do_HEAD()
@@ -62,8 +64,14 @@ class SpaHandler(http.server.SimpleHTTPRequestHandler):
     def do_DELETE(self) -> None:  # noqa: N802
         self._proxy("DELETE")
 
-    def _is_api(self) -> bool:
-        return bool(self.proxy_target) and self.path.startswith("/api/")
+    def _is_backend(self) -> bool:
+        """Paths Frappe owns even when the SPA shares the origin."""
+        if not self.proxy_target:
+            return False
+        for route in ("/login", "/app", "/printview"):
+            if self.path == route or self.path.startswith(f"{route}/") or self.path.startswith(f"{route}?"):
+                return True
+        return any(self.path.startswith(prefix) for prefix in ("/api/", "/files/", "/private/"))
 
     def send_head(self):  # SPA fallback for deep links
         path = self.translate_path(self.path)

@@ -10,6 +10,7 @@ import MoneyValue from '@/components/base/MoneyValue.vue'
 import QuantityValue from '@/components/base/QuantityValue.vue'
 import AppPagination from '@/components/data/AppPagination.vue'
 import DataTable from '@/components/data/DataTable.vue'
+import RowEditAction from '@/components/data/RowEditAction.vue'
 import EmptyState from '@/components/feedback/EmptyState.vue'
 import ErrorState from '@/components/feedback/ErrorState.vue'
 import FilterBar from '@/components/data/FilterBar.vue'
@@ -169,6 +170,9 @@ onMounted(async () => {
         <template #cell-quantity="{ row }"><QuantityValue :value="row.quantity" unit="Kg" /></template>
         <template #cell-informationalValue="{ row }"><MoneyValue :value="row.informationalValue" /></template>
         <template #cell-status="{ row }"><StatusBadge :value="row.status" /></template>
+        <template #actions="{ row }">
+          <RowEditAction :editable="row.docstatus === 0" label="تحرير البيع" @edit="router.push(`/sales/${row.name}/edit`)" />
+        </template>
       </DataTable>
 
       <div class="app-mobile-only">

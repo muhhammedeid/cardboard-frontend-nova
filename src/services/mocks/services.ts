@@ -470,10 +470,23 @@ export function createMockSupplierService(): SupplierService {
       rows.unshift(created)
       return created
     },
+    async update(name, input) {
+      await delay()
+      const row = required(rows, name, 'المورد المطلوب غير موجود.')
+      const updated: SupplierDetail = {
+        ...row,
+        supplierName: input.supplierName,
+        supplierType: input.supplierType ?? row.supplierType,
+        taxId: input.taxId,
+        supplierDetails: input.supplierDetails,
+      }
+      Object.assign(row, updated)
+      return updated
+    },
     async capabilities(name) {
       await delay()
       if (name) return { capabilities: required(rows, name, 'المورد المطلوب غير موجود.').capabilities }
-      return { capabilities: { canRead: true, canCreate: true, canEdit: false as const } }
+      return { capabilities: { canRead: true, canCreate: true, canEdit: true } }
     },
     async summary(name): Promise<SupplierSummary> {
       await delay()

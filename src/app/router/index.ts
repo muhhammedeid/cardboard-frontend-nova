@@ -32,6 +32,7 @@ export const routes: RouteRecordRaw[] = [
   { path: '/suppliers', name: 'suppliers', component: SupplierListPage, meta: { label: 'الموردون', subtitle: 'ملفات الموردين وأرصدتهم', area: 'suppliers' } },
   { path: '/suppliers/new', name: 'supplier-new', component: SupplierFormPage, meta: { label: 'مورد جديد', subtitle: 'إنشاء ملف مورد', area: 'suppliers' } },
   { path: '/suppliers/:id', name: 'supplier-detail', component: SupplierDetailPage, meta: { label: 'ملف المورد', area: 'suppliers' } },
+  { path: '/suppliers/:id/edit', name: 'supplier-edit', component: SupplierFormPage, meta: { label: 'تحرير مورد', subtitle: 'تعديل بيانات المورد', area: 'suppliers' } },
 
   { path: '/payments', name: 'payments', component: PaymentListPage, meta: { label: 'المدفوعات', subtitle: 'دفعات الموردين وحالتها', area: 'payments' } },
   { path: '/payments/new', name: 'payment-new', component: PaymentFormPage, meta: { label: 'دفعة مورد جديدة', subtitle: 'تسجيل دفعة على حساب مورد', area: 'payments' } },

@@ -13,7 +13,8 @@ export interface SupplierListItem {
 export interface SupplierCapabilities {
   canRead: boolean
   canCreate: boolean
-  canEdit: false
+  /** The server grants supplier edits through the document write permission. */
+  canEdit: boolean
 }
 
 export interface SupplierDetail extends SupplierListItem {
@@ -72,6 +73,8 @@ export interface SupplierService {
   get(name: string): Promise<SupplierDetail>
   schema(): Promise<SupplierSchema>
   create(input: CreateSupplierRequest): Promise<SupplierDetail>
+  /** Edits the same fields the create form captured. */
+  update(name: string, input: CreateSupplierRequest): Promise<SupplierDetail>
   capabilities(name?: string): Promise<{ capabilities: SupplierCapabilities }>
   summary(name: string, fromDate?: string, toDate?: string): Promise<SupplierSummary>
   statement(name: string, fromDate?: string, toDate?: string, page?: number, pageSize?: number): Promise<SupplierStatementReport>

@@ -24,7 +24,7 @@ interface RawSupplier {
   primary_address?: string
   tax_id?: string
   supplier_details?: string
-  capabilities?: { can_read: boolean; can_create: boolean; can_edit: false }
+  capabilities?: { can_read: boolean; can_create: boolean; can_edit?: boolean }
 }
 
 export const mapSupplierListItem = (raw: RawSupplier): SupplierListItem => ({
@@ -45,7 +45,7 @@ export const mapSupplierDetail = (raw: RawSupplier): SupplierDetail => ({
   capabilities: {
     canRead: Boolean(raw.capabilities?.can_read),
     canCreate: Boolean(raw.capabilities?.can_create),
-    canEdit: false,
+    canEdit: Boolean(raw.capabilities?.can_edit),
   },
 })
 
@@ -188,12 +188,29 @@ export function createSupplierService(transport: RpcTransport): SupplierService 
         }),
       )
     },
+    async update(name, input) {
+      const raw = await transport.call<RawSupplier>(`${API}.update_supplier`, {
+        name,
+        supplier_name: input.supplierName,
+        supplier_type: input.supplierType,
+        tax_id: input.taxId,
+        supplier_details: input.supplierDetails,
+      })
+      return mapSupplierDetail(raw)
+    },
     async capabilities(name) {
-      const raw = await transport.call<{ capabilities: { can_read: boolean; can_create: boolean } }>(
+      const raw = await transport.call<{ capabilities: { can_read: boolean; can_create: boolean; can_edit?: boolean } }>(
         `${API}.get_capabilities`,
         name ? { name } : {},
       )
-      return { capabilities: { canRead: raw.capabilities.can_read, canCreate: raw.capabilities.can_create, canEdit: false } }
+      return {
+        capabilities: {
+          canRead: raw.capabilities.can_read,
+          canCreate: raw.capabilities.can_create,
+          // The server owns this flag; a missing one means "no edit right".
+          canEdit: Boolean(raw.capabilities.can_edit),
+        },
+      }
     },
     async summary(name, fromDate, toDate) {
       return mapSummary(

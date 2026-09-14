@@ -131,6 +131,9 @@ onMounted(load)
         </div>
       </template>
       <template #actions>
+        <AppButton v-if="supplier?.capabilities.canEdit" variant="secondary" icon="settings" @click="router.push(`/suppliers/${supplierId}/edit`)">
+          تحرير البيانات
+        </AppButton>
         <AppButton variant="primary" icon="payments" @click="router.push({ path: '/payments/new', query: { supplier: supplierId } })">دفعة مورد</AppButton>
         <AppButton variant="secondary" icon="inbound" @click="router.push({ path: '/supplies/new', query: { supplier: supplierId } })">توريدة جديدة</AppButton>
         <AppButton variant="ghost" icon="arrowRight" @click="router.push('/suppliers')">القائمة</AppButton>
