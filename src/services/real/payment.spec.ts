@@ -56,12 +56,28 @@ describe('supplier payment service against captured live payloads', () => {
     const suppliers = createRecordingTransport(PAYMENT_SUPPLIERS)
     const options = await createPaymentService(suppliers.rpc).lookupSuppliers('NOVA')
     expect(suppliers.calls[0].method).toBe(`${API}.lookup_suppliers`)
-    expect(options.map((option) => option.supplier)).toEqual(PAYMENT_SUPPLIERS.data.map((row) => row.supplier))
+    // The backend sends `supplier_name`; the DTO (and therefore the select label)
+    // is `supplierName`. A blank label would render a selectable empty row.
+    expect(options).toEqual(
+      PAYMENT_SUPPLIERS.data.map((row) => ({
+        supplier: row.supplier,
+        supplierName: row.supplier_name,
+        disabled: Boolean(row.disabled),
+      })),
+    )
+    expect(options.every((option) => option.supplierName.trim().length > 0)).toBe(true)
 
     const modes = createRecordingTransport(PAYMENT_MODES)
     const values = await createPaymentService(modes.rpc).lookupModes()
     expect(modes.calls[0].method).toBe(`${API}.lookup_modes_of_payment`)
     expect(values).toEqual(PAYMENT_MODES.data.map((row) => row.name))
+  })
+
+  it('still shows a label when the server omits the supplier display name', async () => {
+    const { rpc } = createRecordingTransport({ data: [{ supplier: 'SUP-0001', disabled: false }] })
+    const [option] = await createPaymentService(rpc).lookupSuppliers()
+
+    expect(option.supplierName).toBe('SUP-0001')
   })
 
   it('reads the company and outstanding context for the chosen supplier', async () => {

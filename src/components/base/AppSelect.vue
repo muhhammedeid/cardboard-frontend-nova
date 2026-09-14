@@ -2,6 +2,8 @@
 export interface SelectOption {
   value: string
   label: string
+  /** Mirrors the server flag so an unavailable choice is visible before clicking. */
+  disabled?: boolean
 }
 
 withDefaults(
@@ -29,6 +31,8 @@ defineEmits<{ (event: 'update:modelValue', value: string): void }>()
     @change="$emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
   >
     <option v-if="placeholder !== undefined" value="">{{ placeholder }}</option>
-    <option v-for="option in options" :key="option.value" :value="option.value">{{ option.label }}</option>
+    <option v-for="option in options" :key="option.value" :value="option.value" :disabled="option.disabled">
+      {{ option.label }}
+    </option>
   </select>
 </template>

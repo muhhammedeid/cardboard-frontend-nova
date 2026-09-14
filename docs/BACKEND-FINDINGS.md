@@ -114,6 +114,14 @@ but the same quantities as `inbound` / `outbound` / `net` inside every `by_item`
 both correctly (covered by a fixture-driven spec), but any new client has to learn the difference.
 Cosmetic suggestion: use one spelling in both places.
 
+## BG-10 — Supplier lookups use two different row shapes
+
+`supply.lookup_suppliers` sends `{ name, supplier_name }`, while
+`supplier_payments.lookup_suppliers` sends `{ supplier, supplier_name, disabled }` — the key for the same
+concept is `name` in one and `supplier` in the other. Both were verified live; Nova maps each explicitly and
+a fixture-driven test now pins the payment shape, so a change there turns red instead of rendering a blank
+option. Suggestion (cosmetic): align the key names, or document the difference in the contract.
+
 ## Contract nuance — `session.get_session_context` is GET-only
 
 The method declares `methods=["GET"]`, so calling it with POST answers

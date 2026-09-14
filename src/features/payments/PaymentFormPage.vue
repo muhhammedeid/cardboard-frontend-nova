@@ -42,7 +42,11 @@ const canCreate = ref(false)
 const form = reactive<PaymentInput>({ supplier: String(route.query.supplier ?? ''), amount: 0, modeOfPayment: '', postingDate: '', referenceNo: '', referenceDate: '', notes: '' })
 
 const supplierOptions = computed<SelectOption[]>(() =>
-  suppliers.value.map((option) => ({ value: option.supplier, label: option.supplierName })),
+  suppliers.value.map((option) => ({
+    value: option.supplier,
+    label: option.supplierName || option.supplier,
+    disabled: option.disabled,
+  })),
 )
 const modeOptions = computed<SelectOption[]>(() => modes.value.map((mode) => ({ value: mode, label: mode })))
 const canSave = computed(() => (isEdit.value ? Boolean(saved.value?.capabilities.canEdit) : canCreate.value))

@@ -95,8 +95,18 @@ export function createPaymentService(transport: RpcTransport): PaymentService {
       return mapDetail(await transport.call<RawPayment>(`${API}.get_supplier_payment`, { name }))
     },
     async lookupSuppliers(search) {
-      const raw = await transport.call<{ data: SupplierOption[] }>(`${API}.lookup_suppliers`, { search })
-      return raw.data
+      const raw = await transport.call<{ data: Array<{ supplier: string; supplier_name?: string; disabled?: boolean }> }>(
+        `${API}.lookup_suppliers`,
+        { search },
+      )
+      return raw.data.map(
+        (row): SupplierOption => ({
+          supplier: row.supplier,
+          // The label must never be blank: a row with no text is still selectable.
+          supplierName: row.supplier_name || row.supplier,
+          disabled: Boolean(row.disabled),
+        }),
+      )
     },
     async lookupModes(search) {
       const raw = await transport.call<{ data: Array<{ name: string }> }>(`${API}.lookup_modes_of_payment`, { search })

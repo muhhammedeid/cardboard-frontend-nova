@@ -240,6 +240,22 @@
   cursor: not-allowed;
 }
 
+/**
+ * The native option popup is drawn by the OS, so it does not inherit the control
+ * colours: without an explicit pair, dark mode can render theme-coloured text on
+ * an OS-coloured (light) popup, i.e. invisible supplier names. `color-scheme` is
+ * set per theme in tokens.css; these two lines keep the popup readable even when
+ * the platform ignores it.
+ */
+.select option {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.select option:disabled {
+  color: var(--text-faint);
+}
+
 .input[readonly] {
   background: var(--surface-2);
 }

@@ -62,6 +62,15 @@ instead of hand-typed guesses.
 7. `SettingsPage.vue` — lookups load after the settings, and warehouses reload when the company changes.
 8. `SupplierDetailPage.vue` — states that metrics/history cover submitted documents only (BG-04).
 9. `SupplyDetailPage.vue` + supply contract/adapter — the purchase invoice is now surfaced.
+10. **Payment supplier select rendered blank rows** (found in the browser by the operator on
+    `2026-09-14`). `lookup_suppliers` sends `supplier_name`, but `src/services/real/payment.ts` returned the raw
+    rows behind a `SupplierOption` cast, so the payment form read `option.supplierName → undefined` and each
+    row rendered a selectable **empty** label. Fixed by mapping the row explicitly
+    (`supplierName: row.supplier_name || row.supplier`), passing the server `disabled` flag through
+    `AppSelect`, and pinning the native popup colours (`.select option { color/background }`) so dark mode
+    cannot paint theme-coloured text on an OS-coloured popup. Regression guards added: a mapping/value test in
+    `src/services/real/payment.spec.ts` (label must never be blank, plus the missing-name fallback) and a
+    render test in `src/components/base/AppSelect.spec.ts`.
 
 ## 4. Verification gates
 
