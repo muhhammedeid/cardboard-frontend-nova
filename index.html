@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#070a13" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f2f4fa" media="(prefers-color-scheme: light)" />
+    <meta name="description" content="إدارة الكرتون — واجهة تشغيلية للتوريدات والمبيعات والمخزون والموردين." />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&display=swap"
+    />
+    <script>
+      // Resolve the persisted/system theme before Vue mounts so the first paint
+      // never flashes the wrong palette. Storage key and resolution rules are
+      // shared with src/app/theme/theme.ts.
+      ;(() => {
+        const KEY = 'nova-theme'
+        const stored = window.localStorage.getItem(KEY)
+        const preference = ['light', 'dark', 'system'].includes(stored) ? stored : 'system'
+        const media = window.matchMedia('(prefers-color-scheme: dark)')
+        const dark = preference === 'dark' || (preference === 'system' && media.matches)
+        const root = document.documentElement
+        root.dataset.theme = dark ? 'dark' : 'light'
+        root.dataset.themePreference = preference
+        root.style.colorScheme = dark ? 'dark' : 'light'
+      })()
+    </script>
+    <title>إدارة الكرتون — Nova</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

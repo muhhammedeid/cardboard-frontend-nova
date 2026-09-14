@@ -1,0 +1,63 @@
+/* =============================================================================
+   Nova print layer — supply tickets and detail pages must print cleanly RTL.
+   ========================================================================== */
+
+@media print {
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    background: #fff !important;
+    background-image: none !important;
+    color: #111;
+  }
+
+  .app-rail,
+  .app-topbar,
+  .app-mobile-bar,
+  .toast-host,
+  .drawer,
+  .overlay,
+  .page-header__actions,
+  .form-actions,
+  .filter-bar__actions,
+  .pagination__controls,
+  .no-print {
+    display: none !important;
+  }
+
+  .app-shell,
+  .app-shell[data-collapsed='true'] {
+    display: block;
+  }
+
+  .app-content {
+    padding: 0;
+  }
+
+  .panel,
+  .metric,
+  .table-wrap,
+  .record-card {
+    border-color: #cbd5e1 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  .table {
+    min-inline-size: 0;
+  }
+
+  .table thead th {
+    position: static;
+    background: #f1f5f9 !important;
+  }
+
+  .app-icon,
+  .metric::after,
+  .panel--accent::before {
+    display: none !important;
+  }
+}

@@ -1,0 +1,373 @@
+/* =============================================================================
+   Nova layout — RTL application shell with explicit named grid areas
+   ========================================================================== */
+
+.app-shell {
+  display: grid;
+  grid-template-columns: var(--rail-w) minmax(0, 1fr);
+  grid-template-areas: 'rail main';
+  min-block-size: 100dvh;
+}
+
+.app-shell[data-collapsed='true'] {
+  grid-template-columns: var(--rail-w-compact) minmax(0, 1fr);
+}
+
+/* ------------------------------------------------------------------- rail */
+
+.app-rail {
+  grid-area: rail;
+  position: sticky;
+  inset-block-start: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  block-size: 100dvh;
+  padding: var(--space-4) var(--space-3);
+  background: var(--surface);
+  border-inline-end: 1px solid var(--border);
+  z-index: var(--z-rail);
+}
+
+.app-rail__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-2) var(--space-4);
+}
+
+.app-rail__mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border-radius: var(--radius-md);
+  background: var(--brand-gradient);
+  color: #fff;
+  box-shadow: var(--shadow-glow);
+}
+
+.app-rail__identity {
+  display: grid;
+  gap: 0.1rem;
+  min-inline-size: 0;
+}
+
+.app-rail__identity strong {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.app-rail__identity span {
+  color: var(--text-faint);
+  font-size: var(--text-2xs);
+}
+
+.app-rail__scroll {
+  overflow-y: auto;
+  display: grid;
+  align-content: start;
+  gap: var(--space-5);
+  padding-block: var(--space-2);
+  scrollbar-gutter: stable;
+}
+
+.app-rail__group {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.app-rail__group-label {
+  padding-inline: var(--space-2);
+  color: var(--text-faint);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.app-rail__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: 2.375rem;
+  padding-inline: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: var(--text-base);
+  font-weight: 500;
+  transition: background var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+}
+
+.app-rail__link:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.app-rail__link[aria-current='page'] {
+  background: var(--primary-soft);
+  color: var(--primary-soft-text);
+  font-weight: 700;
+}
+
+.app-rail__link[aria-current='page']::after {
+  content: '';
+  position: absolute;
+  inset-inline-end: -0.75rem;
+  inset-block: 25%;
+  inline-size: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-gradient);
+}
+
+.app-rail__link .app-icon {
+  flex: none;
+  color: currentColor;
+  opacity: 0.9;
+}
+
+.app-rail__footer {
+  display: grid;
+  gap: var(--space-2);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.app-shell[data-collapsed='true'] .app-rail {
+  padding-inline: var(--space-2);
+}
+
+.app-shell[data-collapsed='true'] .app-rail__identity,
+.app-shell[data-collapsed='true'] .app-rail__group-label,
+.app-shell[data-collapsed='true'] .app-rail__link span:not(.app-rail__badge) {
+  display: none;
+}
+
+.app-shell[data-collapsed='true'] .app-rail__brand {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.app-shell[data-collapsed='true'] .app-rail__link {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+/* -------------------------------------------------------------------- main */
+
+.app-main {
+  grid-area: main;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-inline-size: 0;
+}
+
+.app-topbar {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--z-sticky);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  min-block-size: var(--topbar-h);
+  padding: var(--space-2) clamp(var(--space-4), 2vw, var(--space-6));
+  background: var(--glass);
+  backdrop-filter: blur(14px) saturate(140%);
+  border-block-end: 1px solid var(--border);
+}
+
+.app-topbar__title {
+  display: grid;
+  gap: 0.1rem;
+  min-inline-size: 0;
+}
+
+.app-topbar__title h1 {
+  font-size: var(--text-xl);
+  letter-spacing: -0.01em;
+}
+
+.app-topbar__title p {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.app-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.app-content {
+  min-inline-size: 0;
+  padding: var(--space-5) clamp(var(--space-4), 2vw, var(--space-6)) var(--space-10);
+}
+
+.app-content__inner {
+  max-inline-size: var(--content-max);
+  margin-inline: auto;
+  display: grid;
+  gap: var(--space-5);
+  align-content: start;
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.page-header__identity {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.page-header__identity h1 {
+  font-size: var(--text-2xl);
+}
+
+.page-header__identity p {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  max-inline-size: 52ch;
+}
+
+.page-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.page-section {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.page-section__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.page-section__heading h2 {
+  font-size: var(--text-md);
+}
+
+.page-section__heading p {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  padding-block-start: var(--space-1);
+}
+
+/* ---------------------------------------------------------------- responsive */
+
+@media (max-width: 1151px) {
+  .app-shell {
+    grid-template-columns: var(--rail-w-compact) minmax(0, 1fr);
+  }
+
+  .app-shell .app-rail {
+    padding-inline: var(--space-2);
+  }
+
+  .app-shell .app-rail__identity,
+  .app-shell .app-rail__group-label,
+  .app-shell .app-rail__link > span.app-rail__label {
+    display: none;
+  }
+
+  .app-shell .app-rail__brand {
+    justify-content: center;
+    padding-inline: 0;
+  }
+
+  .app-shell .app-rail__link {
+    justify-content: center;
+    padding-inline: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .app-shell,
+  .app-shell[data-collapsed='true'] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'main';
+  }
+
+  .app-shell > .app-rail {
+    display: none;
+  }
+
+  .app-topbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding-inline: var(--space-3);
+  }
+
+  .app-topbar__title h1 {
+    font-size: var(--text-lg);
+  }
+
+  .app-content {
+    padding: var(--space-4) var(--space-3) var(--space-12);
+  }
+
+  .app-content__inner {
+    gap: var(--space-4);
+  }
+
+  /* One-handed operational shortcuts. */
+  .app-mobile-bar {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: var(--z-sticky);
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-2) max(var(--space-2), env(safe-area-inset-bottom));
+    background: var(--glass);
+    backdrop-filter: blur(14px);
+    border-block-start: 1px solid var(--border);
+  }
+}
+
+.app-mobile-bar {
+  display: none;
+}
+
+.app-mobile-only {
+  display: none;
+}
+
+.btn.app-mobile-only {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .app-mobile-only {
+    display: block;
+  }
+
+  .btn.app-mobile-only {
+    display: inline-flex;
+  }
+
+  .app-desktop-only {
+    display: none !important;
+  }
+}
