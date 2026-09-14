@@ -16,7 +16,7 @@ import PermissionState from '@/components/feedback/PermissionState.vue'
 import { FrontendError } from '@/services/api/errors'
 import { useServices } from '@/services'
 import { findReportDefinition, type ReportKey } from './report-registry'
-import { canLoadReport, reportFilterFields, resolveReportDatePreset, type ReportFilters } from './report-shell'
+import { canLoadReport, reportFilterFields, resolveReportDatePreset, toIsoDate, type ReportFilters } from './report-shell'
 
 const route = useRoute()
 const services = useServices()
@@ -43,6 +43,10 @@ const renderers: Record<ReportKey, ReturnType<typeof defineAsyncComponent>> = {
 const renderer = computed(() => (definition.value ? renderers[definition.value.key] : null))
 const fields = computed(() => (definition.value ? reportFilterFields(definition.value) : []))
 const unavailable = computed(() => Boolean(definition.value?.requiresSupplier) && !filters.value.supplier)
+/** The backend rejects a future date, so the pickers cannot offer one. */
+const today = toIsoDate(new Date())
+/** A failed lookup and an empty supplier master need different messages. */
+const supplierCatalogEmpty = computed(() => !supplierLookupFailed.value && supplierOptions.value.length === 0)
 
 async function loadSupplierOptions(): Promise<void> {
   if (!definition.value?.requiresSupplier) return
@@ -129,7 +133,7 @@ onMounted(async () => {
             placeholder="اختر المورد"
             :disabled="supplierLookupFailed"
           />
-          <AppInput v-else v-model="filters[field.key]" type="date" />
+          <AppInput v-else v-model="filters[field.key]" type="date" :max="today" />
         </FormField>
         <div v-if="definition.supportsDateRange" class="filter-bar__actions">
           <AppButton variant="secondary" size="sm" @click="preset('today')">اليوم</AppButton>
@@ -138,8 +142,18 @@ onMounted(async () => {
           <AppButton variant="secondary" size="sm" @click="preset('previous-month')">الشهر السابق</AppButton>
         </div>
         <p v-if="supplierLookupFailed" class="field__error">تعذر تحميل قائمة الموردين؛ لا يمكن تشغيل هذا التقرير الآن.</p>
+        <p v-else-if="definition.requiresSupplier && supplierCatalogEmpty" class="field__hint">
+          لا يوجد موردون مسجلون بعد — أنشئ موردًا أولًا ثم أعد فتح التقرير.
+        </p>
         <div class="filter-bar__actions">
-          <AppButton variant="primary" icon="refresh" :busy="loading" @click="load">تحديث التقرير</AppButton>
+          <AppButton
+            variant="primary"
+            icon="refresh"
+            :busy="loading"
+            :disabled="Boolean(definition.requiresSupplier) && supplierLookupFailed"
+            @click="load"
+            >تحديث التقرير</AppButton
+          >
         </div>
       </section>
 

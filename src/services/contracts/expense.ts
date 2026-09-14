@@ -50,6 +50,14 @@ export interface ExpenseOption {
   displayName: string
 }
 
+/** `get_new_expense_schema` also exposes the create capability. */
+export interface ExpenseSchema {
+  defaultPostingDate: string
+  requiredFields: string[]
+  optionalFields: string[]
+  capabilities: { canCreate: boolean }
+}
+
 export type ExpensePage = Page<ExpenseItem>
 
 export type ExpenseListQuery = Partial<{
@@ -67,7 +75,7 @@ export interface ExpenseService {
   get(name: string): Promise<ExpenseDetail>
   categories(): Promise<ExpenseOption[]>
   sources(): Promise<ExpenseOption[]>
-  schema(): Promise<{ defaultPostingDate: string }>
+  schema(): Promise<ExpenseSchema>
   create(input: ExpenseInput): Promise<ExpenseDetail>
   update(name: string, input: ExpenseInput): Promise<ExpenseDetail>
   submit(name: string): Promise<ExpenseDetail>

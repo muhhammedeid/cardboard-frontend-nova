@@ -629,7 +629,12 @@ export function createMockExpenseService(): ExpenseService {
     },
     async schema() {
       await delay()
-      return { defaultPostingDate: MOCK_TODAY }
+      return {
+        defaultPostingDate: MOCK_TODAY,
+        requiredFields: ['posting_date', 'expense_category', 'amount', 'payment_source'],
+        optionalFields: ['payment_mode', 'supplier_or_party', 'description', 'attachment', 'reference_no'],
+        capabilities: { canCreate: true },
+      }
     },
     async create(input) {
       await delay()

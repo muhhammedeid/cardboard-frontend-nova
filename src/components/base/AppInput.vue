@@ -5,6 +5,7 @@ withDefaults(
     type?: 'text' | 'date' | 'number' | 'search' | 'email' | 'tel'
     placeholder?: string
     min?: string | number
+    max?: string | number
     step?: string | number
     disabled?: boolean
     readonly?: boolean
@@ -25,6 +26,7 @@ defineEmits<{ (event: 'update:modelValue', value: string | number): void; (event
     :value="modelValue"
     :placeholder="placeholder"
     :min="min"
+    :max="max"
     :step="step"
     :disabled="disabled"
     :readonly="readonly"

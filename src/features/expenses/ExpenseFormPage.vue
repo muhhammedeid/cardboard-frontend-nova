@@ -48,8 +48,10 @@ const form = reactive<ExpenseInput>({
 
 const categoryOptions = computed<SelectOption[]>(() => categories.value.map((option) => ({ value: option.name, label: option.displayName })))
 const sourceOptions = computed<SelectOption[]>(() => sources.value.map((option) => ({ value: option.name, label: option.displayName })))
-const canSave = computed(() => (isEdit.value ? Boolean(saved.value?.capabilities.canEdit) : true))
-const canSubmit = computed(() => (isEdit.value ? Boolean(saved.value?.capabilities.canSubmit) : true))
+/** Create capability comes from the server schema; never assumed. */
+const canCreate = ref(false)
+const canSave = computed(() => (isEdit.value ? Boolean(saved.value?.capabilities.canEdit) : canCreate.value))
+const canSubmit = computed(() => (isEdit.value ? Boolean(saved.value?.capabilities.canSubmit) : canCreate.value))
 
 async function loadCategories(): Promise<void> {
   try {
@@ -112,8 +114,12 @@ async function save(submit = false): Promise<void> {
 onMounted(async () => {
   // Independent lookups: one failure must not hide the other select.
   const [schemaResult] = await Promise.allSettled([api.schema(), loadCategories(), loadSources()])
-  if (schemaResult.status === 'fulfilled') form.postingDate = schemaResult.value.defaultPostingDate
-  else schemaFailed.value = true
+  if (schemaResult.status === 'fulfilled') {
+    form.postingDate = schemaResult.value.defaultPostingDate
+    canCreate.value = schemaResult.value.capabilities.canCreate
+  } else {
+    schemaFailed.value = true
+  }
 
   if (recordId.value) {
     try {
@@ -191,6 +197,7 @@ onMounted(async () => {
       <div class="form-actions">
         <AppButton v-if="canSave" variant="primary" icon="check" :busy="busy" @click="save(false)">حفظ كمسودة</AppButton>
         <AppButton v-if="canSubmit" variant="secondary" icon="check" :busy="busy" @click="save(true)">اعتماد المصروف</AppButton>
+        <p v-if="!canSave && !canSubmit" class="field__hint">لا تملك صلاحية إنشاء مصروف على الخادم (can_create غير متاح).</p>
         <AppButton variant="ghost" @click="router.push('/expenses')">إلغاء</AppButton>
       </div>
     </template>

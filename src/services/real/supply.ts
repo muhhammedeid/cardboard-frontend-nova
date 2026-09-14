@@ -24,6 +24,7 @@ interface RawSupply {
   discount_weight?: number
   display_payable_weight?: number
   rate_per_kg?: number
+  purchase_invoice?: string
   payment_status?: string
   purchase_invoice_outstanding?: number
   invoice_total?: number
@@ -81,6 +82,7 @@ const listItem = (raw: RawSupply): SupplyDetail => ({
   discountWeight: raw.discount_weight ?? 0,
   displayPayableWeight: raw.display_payable_weight ?? raw.payable_weight,
   ratePerKg: raw.rate_per_kg ?? 0,
+  purchaseInvoice: raw.purchase_invoice,
   paymentStatus: raw.payment_status,
   purchaseInvoiceOutstanding: raw.purchase_invoice_outstanding,
   invoiceTotal: raw.invoice_total,

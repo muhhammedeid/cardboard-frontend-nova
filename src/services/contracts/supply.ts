@@ -48,6 +48,7 @@ export interface SupplyDetail extends SupplyListItem {
   discountWeight: number
   displayPayableWeight: number
   ratePerKg: number
+  purchaseInvoice?: string
   paymentStatus?: string
   purchaseInvoiceOutstanding?: number
   invoiceTotal?: number

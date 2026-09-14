@@ -160,6 +160,7 @@ onMounted(load)
         <FactsList
           :facts="[
             { label: 'حالة الدفع', value: record.paymentStatus },
+            { label: 'فاتورة الشراء', value: record.purchaseInvoice ?? null, kind: 'code' },
             { label: 'إجمالي الفاتورة', value: record.invoiceTotal ?? null, kind: 'money' },
             { label: 'المدفوع من الفاتورة', value: record.invoicePaidAmount ?? null, kind: 'money' },
             { label: 'المتبقي على الفاتورة', value: record.purchaseInvoiceOutstanding ?? null, kind: 'money' },

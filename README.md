@@ -15,11 +15,22 @@
 
 ```bash
 npm install          # أو انسخ node_modules من الواجهة الحالية (نفس الإصدارات)
-npm run dev          # real mode → http://localhost:5173 مع بروكسي /api إلى الخادم
-npm run dev:mock     # mock mode  → http://localhost:5180 بدون أي خادم
+npm run dev          # real mode → http://cardboard.localhost:5173 (انظر 1.1)
+npm run dev:mock     # mock mode  → http://cardboard.localhost:5180 بدون أي خادم
 npm run build        # typecheck + build إنتاجي (real)
 npm run build:mock   # build تجريبي بمزود بيانات ثابتة (dist-mock)
 ```
+
+### 1.1 لماذا `cardboard.localhost:5173` وليس `localhost:5173`
+
+Frappe يحدّد السايت من هيدر `Host` الوارد (مع تجاهل المنفذ)، ولا يمكن لـVite — لا بخيار
+`headers` ولا بهوك `configure` (تم اختبار الاثنين) — أن يعيد كتابة هذا الهيدر: ما يرسله
+المتصفح هو ما يصل إلى الخادم. لذلك:
+
+- على `http://cardboard.localhost:5173` يعمل كل شيء، وتُرسل كوكي جلسة Desk فيبقى المستخدم مسجّلًا.
+- على `http://localhost:5173` يصل الطلب إلى Frappe بلا سايت → كل دوال التطبيق ترد
+  `is not whitelisted` (وليس خطأ صلاحيات).
+- لذلك أيضًا `changeOrigin: false` في `vite.config.ts` وأُزيل تجاوز `Host` المضلِّل.
 
 ### متغيرات البيئة
 

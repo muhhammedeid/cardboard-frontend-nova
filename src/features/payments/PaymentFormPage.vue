@@ -36,6 +36,8 @@ const saved = ref<PaymentDetail | null>(null)
 const loading = ref(true)
 const busy = ref(false)
 const formError = ref('')
+/** Create capability comes from the server schema; never assumed. */
+const canCreate = ref(false)
 
 const form = reactive<PaymentInput>({ supplier: String(route.query.supplier ?? ''), amount: 0, modeOfPayment: '', postingDate: '', referenceNo: '', referenceDate: '', notes: '' })
 
@@ -43,16 +45,21 @@ const supplierOptions = computed<SelectOption[]>(() =>
   suppliers.value.map((option) => ({ value: option.supplier, label: option.supplierName })),
 )
 const modeOptions = computed<SelectOption[]>(() => modes.value.map((mode) => ({ value: mode, label: mode })))
-const canSave = computed(() => (isEdit.value ? Boolean(saved.value?.capabilities.canEdit) : true))
-const canSubmit = computed(() => (isEdit.value ? Boolean(saved.value?.capabilities.canSubmit) : true))
+const canSave = computed(() => (isEdit.value ? Boolean(saved.value?.capabilities.canEdit) : canCreate.value))
+const canSubmit = computed(() => (isEdit.value ? Boolean(saved.value?.capabilities.canSubmit) : canCreate.value))
+/** Supplier with no outstanding invoice cannot be paid (server rejects it). */
+const noOutstanding = ref(false)
 
 async function loadContext(): Promise<void> {
   if (!form.supplier) return
   contextFailed.value = false
   try {
-    outstanding.value = (await api.context(form.supplier)).currentSupplierOutstanding ?? null
+    const value = (await api.context(form.supplier)).currentSupplierOutstanding ?? null
+    outstanding.value = value
+    noOutstanding.value = value === 0
   } catch {
     outstanding.value = null
+    noOutstanding.value = false
     contextFailed.value = true
   }
 }
@@ -99,6 +106,7 @@ onMounted(async () => {
   if (schemaResult.status === 'fulfilled') {
     form.postingDate = form.postingDate || schemaResult.value.defaultPostingDate
     form.modeOfPayment = form.modeOfPayment || (schemaResult.value.defaultModeOfPayment ?? '')
+    canCreate.value = schemaResult.value.capabilities.canCreate
   } else {
     schemaFailed.value = true
   }
@@ -137,6 +145,9 @@ onMounted(async () => {
     <template v-else>
       <p v-if="formError" class="readonly-note readonly-note--warning" role="alert">{{ formError }}</p>
       <p v-if="schemaFailed" class="readonly-note readonly-note--warning">تعذر تحميل القيم الافتراضية من الخادم؛ أكمل الحقول يدويًا.</p>
+      <p v-if="noOutstanding" class="readonly-note readonly-note--warning" role="status">
+        لا توجد فواتير مستحقة لهذا المورد — يرفض الخادم الدفعة حتى توجد توريدة معتمدة برصيد مستحق.
+      </p>
 
       <AppPanel title="بيانات الدفعة">
         <div class="form-grid">
@@ -183,6 +194,7 @@ onMounted(async () => {
       <div class="form-actions">
         <AppButton v-if="canSave" variant="primary" icon="check" :busy="busy" @click="save(false)">حفظ كمسودة</AppButton>
         <AppButton v-if="canSubmit" variant="secondary" icon="check" :busy="busy" @click="save(true)">اعتماد الدفعة</AppButton>
+        <p v-if="!canSave && !canSubmit" class="field__hint">لا تملك صلاحية إنشاء دفعة على الخادم (can_create غير متاح).</p>
         <AppButton variant="ghost" @click="router.push('/payments')">إلغاء</AppButton>
         <span v-if="outstanding !== null" class="push faint row">الرصيد الحالي <MoneyValue :value="outstanding" /></span>
       </div>

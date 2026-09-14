@@ -84,6 +84,9 @@ async function selectTab(id: string): Promise<void> {
   }
 }
 
+/** The supplier summary/statement count submitted documents only. */
+const historyNote = 'المؤشرات والتوريدات والدفعات تعرض السجلات المعتمدة فقط؛ المسودات لا تظهر هنا.'
+
 onMounted(load)
 </script>
 
@@ -130,6 +133,7 @@ onMounted(load)
       </section>
 
       <p v-if="error" class="readonly-note readonly-note--warning" role="alert">{{ error }}</p>
+      <p class="readonly-note">{{ historyNote }}</p>
 
       <AppTabs :tabs="tabs" :active-id="activeTab" label="أقسام ملف المورد" @update:active-id="selectTab" />
 

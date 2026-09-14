@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 
 import AppButton from '@/components/base/AppButton.vue'
 import AppIcon from '@/components/base/AppIcon.vue'
@@ -41,24 +41,37 @@ const itemGroupOptions = computed<SelectOption[]>(() => (lookups.value?.itemGrou
 const supplierGroupOptions = computed<SelectOption[]>(() => (lookups.value?.supplierGroups ?? []).map((o) => ({ value: o.name, label: o.displayName })))
 const modeOptions = computed<SelectOption[]>(() => (lookups.value?.modesOfPayment ?? []).map((o) => ({ value: o.name, label: o.displayName })))
 
+async function loadLookups(company?: string): Promise<void> {
+  try {
+    lookups.value = await api.lookups(company)
+    lookupsFailed.value = false
+  } catch {
+    lookups.value = null
+    lookupsFailed.value = true
+  }
+}
+
 async function load(): Promise<void> {
   loading.value = true
   error.value = ''
   try {
-    const [settingsResult, lookupsResult] = await Promise.allSettled([api.get(), api.lookups()])
-    if (settingsResult.status === 'fulfilled') Object.assign(settings, settingsResult.value)
-    else error.value = errorMessage(settingsResult.reason, 'تعذر تحميل الإعدادات التشغيلية.')
-    if (lookupsResult.status === 'fulfilled') {
-      lookups.value = lookupsResult.value
-      lookupsFailed.value = false
-    } else {
-      lookups.value = null
-      lookupsFailed.value = true
-    }
+    Object.assign(settings, await api.get())
+    // Warehouse candidates are scoped to the configured company.
+    await loadLookups(settings.company)
+  } catch (value) {
+    error.value = errorMessage(value, 'تعذر تحميل الإعدادات التشغيلية.')
+    await loadLookups()
   } finally {
     loading.value = false
   }
 }
+
+watch(
+  () => settings.company,
+  (company) => {
+    if (!loading.value) void loadLookups(company)
+  },
+)
 
 async function save(): Promise<void> {
   busy.value = true

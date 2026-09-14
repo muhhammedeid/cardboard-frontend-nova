@@ -29,6 +29,8 @@ const api = useServices().inventory
 
 const historyMode = computed(() => route.path === '/inventory/history')
 const selectedDate = ref(String(route.query.date ?? todayIso()))
+/** The backend rejects a future date, so the picker cannot offer one. */
+const today = todayIso()
 const overview = ref<InventoryOverview | null>(null)
 const loading = ref(false)
 const error = ref('')
@@ -85,8 +87,8 @@ onMounted(load)
     </PageHeader>
 
     <FilterBar :label="historyMode ? 'تاريخ الرصيد' : 'تاريخ العرض'">
-      <FormField :label="historyMode ? 'تاريخ الرصيد' : 'تاريخ العرض'" hint="الرصيد يُعرض كما في نهاية اليوم المختار.">
-        <AppInput v-model="selectedDate" type="date" />
+      <FormField :label="historyMode ? 'تاريخ الرصيد' : 'تاريخ العرض'" hint="الرصيد يُعرض كما في نهاية اليوم المختار؛ لا يمكن اختيار تاريخ مستقبلي.">
+        <AppInput v-model="selectedDate" type="date" :max="today" />
       </FormField>
       <template #actions>
         <AppButton variant="primary" icon="refresh" :busy="loading" @click="load">تحديث</AppButton>

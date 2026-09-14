@@ -6,6 +6,7 @@ import type {
   ExpenseListQuery,
   ExpenseOption,
   ExpensePage,
+  ExpenseSchema,
   ExpenseService,
 } from '@/services/contracts'
 
@@ -29,6 +30,13 @@ interface RawExpense {
   reference_date?: string
   accounting_status?: string
   capabilities?: { can_read: boolean; can_edit: boolean; can_submit: boolean; can_cancel: boolean }
+}
+
+interface RawSchema {
+  default_posting_date: string
+  required_fields?: string[]
+  optional_fields?: string[]
+  capabilities?: { can_create?: boolean }
 }
 
 const mapItem = (raw: RawExpense): ExpenseItem => ({
@@ -111,8 +119,13 @@ export function createExpenseService(transport: RpcTransport): ExpenseService {
       )
     },
     async schema() {
-      const raw = await transport.call<{ default_posting_date: string }>(`${API}.get_new_expense_schema`)
-      return { defaultPostingDate: raw.default_posting_date }
+      const raw = await transport.call<RawSchema>(`${API}.get_new_expense_schema`)
+      return {
+        defaultPostingDate: raw.default_posting_date,
+        requiredFields: raw.required_fields ?? [],
+        optionalFields: raw.optional_fields ?? [],
+        capabilities: { canCreate: Boolean(raw.capabilities?.can_create) },
+      } satisfies ExpenseSchema
     },
     async create(input) {
       return mapDetail(await transport.call<RawExpense>(`${API}.create_expense`, editableFields(input)))

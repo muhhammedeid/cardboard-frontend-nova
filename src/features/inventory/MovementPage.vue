@@ -17,6 +17,7 @@ import PageHeader from '@/components/data/PageHeader.vue'
 import type { TableColumn } from '@/components/data/table-column'
 import { useServices } from '@/services'
 import { errorMessage } from '@/services/api/errors'
+import { todayIso } from '@/services/formatting'
 import type { InventoryMovementReport, Lookup } from '@/services/contracts'
 
 const router = useRouter()
@@ -30,6 +31,8 @@ const itemLookupFailed = ref(false)
 const report = ref<InventoryMovementReport | null>(null)
 const loading = ref(true)
 const error = ref('')
+/** The backend rejects a future date, so the pickers cannot offer one. */
+const today = todayIso()
 
 const dateColumns: readonly TableColumn[] = [
   { key: 'date', label: 'التاريخ' },
@@ -92,8 +95,8 @@ onMounted(async () => {
     </PageHeader>
 
     <FilterBar label="فلاتر حركة المخزون">
-      <FormField label="من تاريخ"><AppInput v-model="fromDate" type="date" /></FormField>
-      <FormField label="إلى تاريخ"><AppInput v-model="toDate" type="date" /></FormField>
+      <FormField label="من تاريخ"><AppInput v-model="fromDate" type="date" :max="today" /></FormField>
+      <FormField label="إلى تاريخ"><AppInput v-model="toDate" type="date" :max="today" /></FormField>
       <FormField
         label="نوع الكرتون"
         :hint="itemLookupFailed ? 'تعذر تحميل الأنواع — التقرير معروض لكل الأنواع.' : undefined"
