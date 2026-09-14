@@ -60,13 +60,16 @@ Raw captures of every call live in `~/nova-probes/*.json`; 41 of them were conve
 | 11 | A render error blanked the app; a network outage looked like a signed-out operator | `AppErrorBoundary` + session gate distinguishing signed-out / unreachable; global error handler |
 | 12 | A hung request left a spinner forever; a stale CSRF token looked like a permission error | 30s abort + one automatic token refresh |
 | 13 | Purchase invoice number was never displayed | added to the supply detail (and to the DTO) |
+| 14 | **The shell read its session with POST** although the endpoint is `methods=["GET"]`, so Frappe answered 403 and a perfectly valid session looked signed out — the gate returned after every reload and even right after a successful login (proved from the site access log: `POST /api/method/login → 200` then `get_session_context → 403`, while `list_supplies` was `200`) | the session context is fetched with **GET** (the same call that issues the CSRF token and caches it), with regression specs asserting the verb, the token reuse, and the 403→signed-out mapping |
+| 15 | Frappe's own pages (the login page first) arrived from the dev origin **unstyled**: Vite answered every `/assets/frappe/…` with the SPA shell (`200 text/html` for a `.css`) | `/assets` joins the Frappe-owned paths in the dev proxy and in `serve.py` (documented in `docs/DEPLOYMENT.md` §5) |
+| 16 | An expired session forced the operator out to the Desk login page with no explanation of a refusal | in-app sign-in directly on the gate card, showing the server's Arabic refusal sentence, with the Desk link kept for OTP and email-link sign-in |
 
 ## 4. Verification gates (this pass)
 
 ```
 npm run typecheck   # 0 errors
 npm run lint        # 0 warnings (--max-warnings=0)
-npm run test        # 15 files / 85 tests passed
+npm run test        # 17 files / 95 tests passed
 npm run build       # real bundle ✓ (mock mode refused by design) → dist/nova/
 npm run build:mock  # fixture bundle ✓
 git diff --check    # clean

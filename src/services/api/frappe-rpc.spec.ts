@@ -152,4 +152,45 @@ describe('FrappeRpcTransport', () => {
 
     await expect(new FrappeRpcTransport('').call('app.method')).rejects.toThrowError('استجابة الخادم غير مكتملة.')
   })
+
+  it('reads the session identity with GET, never with a POST', async () => {
+    const calls: Call[] = []
+    stub(calls, () => json({ message: { user: 'operator@example.com', csrf_token: 'tok-session' } }))
+
+    const context = await new FrappeRpcTransport('').sessionContext()
+
+    expect(calls).toHaveLength(1)
+    expect(calls[0].url).toContain(SESSION_CONTEXT_METHOD)
+    // Posting here answers 403 (wrong verb, not wrong permissions) and the shell would
+    // then show the session gate over a perfectly valid session.
+    expect(calls[0].init.method).toBe('GET')
+    expect(context).toEqual({ user: 'operator@example.com', csrfToken: 'tok-session' })
+  })
+
+  it('reuses the token issued by that GET for the next write', async () => {
+    const calls: Call[] = []
+    stub(calls, (url) =>
+      url.includes(SESSION_CONTEXT_METHOD) ? json({ message: { user: 'u', csrf_token: 'tok-from-get' } }) : json({ message: { ok: true } }),
+    )
+
+    const transport = new FrappeRpcTransport('')
+    await transport.sessionContext()
+    await transport.call('app.method', {})
+
+    const headers = calls[1].init.headers as Record<string, string>
+    expect(headers['X-Frappe-CSRF-Token']).toBe('tok-from-get')
+  })
+
+  it('maps a denied session GET to a sign-out rather than a permission failure', async () => {
+    const calls: Call[] = []
+    stub(calls, () => json({}, 403))
+
+    const error = (await new FrappeRpcTransport('')
+      .sessionContext()
+      .catch((value: unknown) => value)) as FrontendError
+
+    expect(error).toBeInstanceOf(FrontendError)
+    expect(error.kind).toBe('authentication')
+    expect(error.status).toBe(403)
+  })
 })

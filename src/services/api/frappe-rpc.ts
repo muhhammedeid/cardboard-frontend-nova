@@ -162,18 +162,35 @@ export class FrappeRpcTransport implements RpcTransport {
     return body.message
   }
 
-  /** Session identity for the shell (user display name). */
+  /**
+   * Session identity for the shell (user display name).
+   *
+   * This endpoint is `methods=["GET"]`. Posting to it answers 403 — a permission-looking
+   * error for what is only a wrong verb — and the shell would then treat a perfectly valid
+   * session as signed out and keep the gate on screen. The GET is also where Frappe issues
+   * the CSRF token, so the token from this response is cached for the next POST.
+   */
   async sessionContext(): Promise<SessionContext> {
-    try {
-      const raw = await this.call<{ user: string; csrf_token: string }>(SESSION_CONTEXT_METHOD)
-      return { user: raw.user, csrfToken: raw.csrf_token }
-    } catch (error) {
+    const response = await this.request(`/api/method/${SESSION_CONTEXT_METHOD}`, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    })
+    const body = (await response.json().catch(() => ({}))) as FrappeResponse<{
+      user?: string
+      csrf_token?: string
+    }>
+
+    if (!response.ok) {
       // The session endpoint is the one place where a denial means "not signed in"
       // rather than "not allowed".
-      if (error instanceof FrontendError && (error.status === 401 || error.status === 403)) {
-        throw new FrontendError('authentication', 'يلزم تسجيل الدخول للمتابعة.', error.status)
+      if (response.status === 401 || response.status === 403) {
+        throw new FrontendError('authentication', 'يلزم تسجيل الدخول للمتابعة.', response.status)
       }
-      throw error
+      throw normalizeApiError(response.status, body._server_messages)
     }
+
+    const token = body.message?.csrf_token
+    if (token) this.csrfToken = token
+    return { user: body.message?.user ?? '', csrfToken: token ?? '' }
   }
 }
