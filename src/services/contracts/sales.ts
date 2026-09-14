@@ -23,6 +23,12 @@ export interface SaleCapabilities {
   canCancel: boolean
 }
 
+/** Answer for a create form, which has no document to ask about yet. */
+export interface SaleCreateCapabilities {
+  canCreate: boolean
+  canSubmit: boolean
+}
+
 export interface SaleListItem {
   name: string
   postingDate: string
@@ -82,5 +88,6 @@ export interface SalesService {
   submit(name: string): Promise<SaleDetail>
   cancel(name: string): Promise<SaleDetail>
   getCapabilities(name: string): Promise<SaleCapabilities>
+  getCreateCapabilities(): Promise<SaleCreateCapabilities>
   formAction(name: string): Promise<{ url: string; deskRoute: string; query: string }>
 }

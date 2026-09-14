@@ -1,149 +1,138 @@
-# Backend findings — Nova real-mode verification
+# Backend findings — Nova real-mode verification & production hardening
 
-Site: `cardboard.localhost` · App: `cardboard_management` (Frappe v15 + ERPNext) · Date: 2026-09-14
-Method: every app-owned RPC was called **against the live site** through the Vite dev proxy with a real
-session cookie + CSRF token. Nothing in the backend or in the existing `frontend/` was modified.
+Site: `cardboard.localhost` · App: `cardboard_management` (Frappe v15 + ERPNext) · 2026-09-14
+Method: every app-owned RPC was called **against the live site** (cookie session + CSRF), first through the
+dev proxy and finally through the production-shaped origin (`http://cardboard.localhost:5200`, built bundle).
+The legacy `frontend/` was never modified.
 
-Legend: **BG** = backend/API observation · **INF** = dev-infrastructure observation.
+Legend: **BG** = backend/API observation · **INF** = dev-infrastructure observation · ✅ fixed in this pass ·
+📄 documented only.
 
 ---
 
-## INF-01 — Real-mode dev origin must be `cardboard.localhost:5173` (blocking)
+## INF-01 📄 — Real-mode dev origin must be `cardboard.localhost:5173` (was blocking)
 
-`frontend/vite.config.ts` (existing project) points the `/api` proxy at `http://127.0.0.1:8000` with
+`frontend/vite.config.ts` (the existing frontend) points the `/api` proxy at `http://127.0.0.1:8000` with
 `changeOrigin: true` **and** `headers: { Host: 'cardboard.localhost' }`.
 
 Measured on Vite 8 (`http-proxy-3`):
 
-| Client Host | Proxy config | Result through the proxy |
+| Client Host | Proxy config | Result |
 | --- | --- | --- |
 | `127.0.0.1:5173` | `changeOrigin: true` + `headers.Host` (existing) | `is not whitelisted` for every app method |
-| `127.0.0.1:5173` | `changeOrigin: false` + `configure` hook setting `host` | `is not whitelisted` (hook does not win) |
-| `cardboard.localhost:5173` | `changeOrigin: false`, no override | **works** — session + CSRF + app methods |
-| `cardboard.localhost:8000` (direct, no proxy) | — | works |
+| `127.0.0.1:5173` | `changeOrigin: false` + `configure` hook setting `host` | `is not whitelisted` — the hook cannot win |
+| `cardboard.localhost:5173` | `changeOrigin: false`, no override | **works** (session + CSRF + every app method) |
 
-Frappe resolves the site from the incoming `Host` header and strips the port, so `cardboard.localhost:5173`
-resolves correctly. Neither the `headers` option nor a `proxyReq` hook can rewrite the outgoing host — the
-browser's host is what the backend sees.
+Frappe resolves the site from the incoming `Host` header (port ignored), and neither the `headers` option nor a
+`proxyReq` hook can rewrite it: the browser's host is what the backend sees. Consequences: open the UI on
+`http://cardboard.localhost:5173` (which is also the only origin where the Desk session cookie is sent), keep
+`changeOrigin: false`, and delete the misleading Host override. Nova's config documents this inline.
 
-Consequences
-1. Open Nova (and the existing frontend) at **http://cardboard.localhost:5173**, not `localhost:5173`.
-2. This is also the only origin where the Desk session cookie is sent, so the operator stays logged in.
-3. `changeOrigin: true` in the existing config is actively harmful in real mode; the `headers.Host` override
-   gives a false sense of safety. Nova's config documents this (see `vite.config.ts`).
+**Same class of bug found again in Nova's own preview proxy** (`serve.py`): Python's `urllib` silently drops a
+caller-supplied `Host` header, so the preview answered as a *different* site. Rewritten on `http.client`, which
+sends exactly the headers it is given — this is what makes the production-shaped verification trustworthy.
 
-## BG-01 — Broken module path in the existing frontend (blocking, not fixed)
+## INF-02 📄 — Cookies are scoped to the site host, so test on the site origin
 
-The existing UI calls `cardboard_management.api.supply.list_supplies`. That module does not exist:
+A session created with an explicit `Host:` override is stored by the client under that host, and a later request
+to `127.0.0.1:<port>` does not send it — the API then answers as **Guest** and the message looks like a
+permission problem. Always exercise the contract on the site origin (`http://cardboard.localhost:<port>`).
+
+## BG-01 📄 — Broken module path in the existing frontend (not fixed by request)
+
+The existing UI calls `cardboard_management.api.supply.list_supplies`. That module does not exist — the app
+package has an **empty stray `api/` directory** at that level, while the real one is
+`cardboard_management.cardboard_management.api`:
 
 ```
-[417] ValidationError: Failed to get method for command
-      cardboard_management.api.supply.list_supplies
-      with No module named 'cardboard_management.api.supply'
+[417] ValidationError: فشل الحصول على طريقة للأمر
+      cardboard_management.api.supply.list_supplies مع No module named 'cardboard_management.api.supply'
 ```
 
-Correct path (used by Nova): `cardboard_management.cardboard_management.api.supply.list_supplies`.
-Impact: the supplies screen in the existing frontend can never load in real mode.
-Left untouched on purpose — it is your repository.
+Fix (their repository, one prefix): `cardboard_management.cardboard_management.api.supply.list_supplies`.
+Nova already uses the correct path.
 
-## BG-02 — No create-capability endpoint for sales
+## BG-02 ✅ — Create-capability endpoint for sales
 
-* `supply.get_create_capabilities` → `{ can_create, can_submit }` ✅
-* `sales.*` → only `get_capabilities(name)` (per document, after a record exists) ❌
+Added `sales.get_create_capabilities` (whitelisted, mirrors `supply.get_create_capabilities`).
+Verified live: `{"can_create": true, "can_submit": true}`. Nova's `/sales/new` now gates its save/submit buttons
+on that answer instead of assuming the right exists. Covered by DB-free contracts
+(`tests/test_api_gap_repairs.py`) and fixture-driven transport specs.
 
-Impact: a create form for sales cannot learn `can_create` before the first save, so it must keep its save
-buttons enabled and rely on the server rejection. Nova does exactly that and says so in the UI copy.
-Suggested fix (backend, your call): add `sales.get_create_capabilities` mirroring supply.
-
-## BG-03 — Supplier payment requires an outstanding invoice
+## BG-03 📄 — Supplier payment requires an outstanding invoice (by design)
 
 `create_supplier_payment` rejects a supplier without outstanding invoices:
+`[417] ValidationError: لا توجد فواتير مستحقة لهذا المورد`. Reproduced with a brand-new supplier, and the same
+payload succeeds for one with a submitted supply. The message is correctly Arabic. Nova now warns before submit
+when `get_supplier_payment_context.current_supplier_outstanding === 0`. No API change needed — the eligibility
+signal is already derivable.
+
+## BG-04 ✅ — Supplier history is submitted-only, and now says so
+
+Drafts stay out of `supply_count`, `supply_history` and statement `entries` (verified: a supplier whose only
+supply is a Draft reports zero). That rule is now **stated by the server** as `submitted_only: true` in both
+`get_supplier_summary` and `get_supplier_statement`, so the client no longer hardcodes the explanation.
+
+## BG-05 ✅ — Reporting date validation now speaks Arabic
+
+`reporting._date_range` throws `_("To Date cannot be in the future")`, but `translations/ar.csv` had no entry,
+so an Arabic operator saw English. Added four missing entries (plus "From Date cannot be after To Date",
+"Invalid reporting status: {0}", "Cardboard item is outside the configured reporting scope"), refreshed the
+translation cache, and verified live:
 
 ```
-[417] ValidationError: لا توجد فواتير مستحقة لهذا المورد
+get_inventory_movement / get_expense_summary with to_date = 2026-09-30
+→ [417] ValidationError: لا يمكن أن يكون تاريخ النهاية في المستقبل
 ```
 
-Reproduced with the freshly created `NOVA-TEST Supplier` (no submitted supply) — the same payload succeeds
-for `UAT W01 Supplier 20260913` (has submitted `CS-2026-00009`). The message is correctly Arabic, and Nova
-now warns before submitting when `get_supplier_payment_context.current_supplier_outstanding === 0`.
-Suggestion: expose an explicit eligibility flag in the context payload so the form can disable itself.
+Nova also caps every date picker at today, so the rejection is unreachable by accident. The production preview
+also proves the CSRF rejection message is Arabic (`طَلَبٌ غَيْرُ…`).
 
-## BG-04 — Supplier summary/statement count submitted documents only
+## BG-06 ✅ — Serialized `frappe.throw` messages no longer hide the reason
 
-For a supplier whose only supply is a **Draft**, `get_supplier_summary` returns `supply_count = 0` with an
-empty `supply_history`, and `get_supplier_statement` returns empty `entries`. Verified with
-`NOVA-TEST Supplier` (draft `CS-2026-00010`).
-Not a defect — but it is invisible to an operator, so Nova states it in the supplier page copy.
-Suggestion: optional `include_drafts` flag, or echo the applied `docstatus` filter in the payload.
+Thrown errors arrive in `_server_messages` as JSON wrapping
+`<details><summary>sentence</summary>traceback</details>`. Nova's transport now takes the `<summary>` sentence,
+strips tags/entities and refuses anything that still looks like a traceback. Proven against **captured live
+payloads** (the Arabic date message and the real broken-route message) in `errors.spec.ts`.
 
-## BG-05 — Future dates are rejected, with an untranslated message
+## BG-07 ✅ — Supplier statement is bounded and windowed
 
-```
-get_operations_summary / get_inventory_movement with to_date = 2026-09-30
-→ [417] ValidationError: To Date cannot be in the future
-```
+`get_supplier_statement` accepted no pagination, so one long-lived supplier produced an unbounded payload.
+It now accepts `page` / `page_size` (default 200, hard maximum 500) and always returns `page`, `page_size`,
+`total`, `has_more`. Verified live: `page_size=2` honoured; `page_size=99999` clamped to **500** with
+`total`/`has_more` intact. Nova requests 200 per page and offers «عرض المزيد» while `has_more` is true.
 
-Two consequences: (1) the sentence reaches an Arabic operator in English; (2) the reporting layer returns it
-outside the feature `*_error` envelope. Nova now caps every date picker at today, so a user cannot trigger
-it by accident. Suggestion: wrap the message with `_()` and/or reuse the `reporting_error` envelope.
+## BG-08 📄 — No delete path for mistaken drafts
 
-## BG-06 — `frappe.throw` messages arrive as serialized HTML
+The contract exposes create / update / submit / cancel but no delete, so drafts can only be removed from Desk.
+Left as a deliberate product decision (silent drafts are harmless; they accumulate).
 
-Thrown validation errors come back in `_server_messages` as a JSON array wrapping
-`{"message": "<details><summary>…</summary>…</details>"}`. A naive client shows a generic fallback and loses
-the reason. Nova's transport now extracts the human sentence and refuses anything that still looks like a
-traceback (`fix` in `src/services/api/errors.ts`). No backend change required — recorded because the reason
-was invisible in the pre-fix UI.
+## BG-09 📄 / BG-10 📄 — Field naming inconsistencies (declined, by design)
 
-## BG-07 — `get_supplier_statement` is unbounded
+* `get_inventory_movement` totals use `inbound_quantity`/`outbound_quantity`/`net_quantity`, while its `by_item`
+  and `by_date` rows use `inbound`/`outbound`/`net`.
+* `supply.lookup_suppliers` sends `{name, supplier_name}`; `supplier_payments.lookup_suppliers` sends
+  `{supplier, supplier_name, disabled}`.
 
-The endpoint accepts `supplier`, `from_date`, `to_date` — no `page` / `page_size`. The response carries one
-entry per supply and per payment for the whole history. Suggestion: optional pagination with a bounded
-default, matching the `Page<>` envelope used everywhere else.
+Both are mapped explicitly in Nova and pinned by fixture-driven specs, so a change turns a test red instead of
+rendering a blank row. Renaming would be a breaking change for existing consumers with no functional gain, so it
+is documented rather than "fixed".
 
-## BG-08 — No delete/unlink path for mistaken drafts
+## Contract nuance 📄 — `session.get_session_context` is GET-only
 
-The contract exposes create / update / submit / cancel but no delete. Drafts created during verification
-(see `REAL-MODE-VERIFICATION.md`) can only be removed from the Desk UI. Worth documenting for operators, and
-worth a deliberate decision (silent drafts are harmless; they just accumulate).
-
-## BG-09 — Field naming is inconsistent between a report's totals and its rows
-
-`get_inventory_movement` returns `inbound_quantity` / `outbound_quantity` / `net_quantity` at the top level,
-but the same quantities as `inbound` / `outbound` / `net` inside every `by_item` and `by_date` row. Nova maps
-both correctly (covered by a fixture-driven spec), but any new client has to learn the difference.
-Cosmetic suggestion: use one spelling in both places.
-
-## BG-10 — Supplier lookups use two different row shapes
-
-`supply.lookup_suppliers` sends `{ name, supplier_name }`, while
-`supplier_payments.lookup_suppliers` sends `{ supplier, supplier_name, disabled }` — the key for the same
-concept is `name` in one and `supplier` in the other. Both were verified live; Nova maps each explicitly and
-a fixture-driven test now pins the payment shape, so a change there turns red instead of rendering a blank
-option. Suggestion (cosmetic): align the key names, or document the difference in the contract.
-
-## Contract nuance — `session.get_session_context` is GET-only
-
-The method declares `methods=["GET"]`, so calling it with POST answers
-`PermissionError: غير مسموح به` (a permission-looking error for what is really a method restriction). Nova
-fetches it with GET before any write, which is also where the CSRF token comes from. Worth knowing before
-debugging a "permission" report that is actually a wrong HTTP verb.
+Calling it with POST answers `PermissionError: غير مسموح به` — a permission-looking error for what is really an
+HTTP-verb restriction. Nova fetches it with GET, which is also where the CSRF token comes from.
 
 ---
 
-## Fields observed on the wire that Nova intentionally does not consume
+## Verification of the backend changes
 
-Harmless extra keys, listed so nobody assumes the DTO is incomplete:
+| Gate | Result |
+| --- | --- |
+| `python3 -m unittest cardboard_management.tests.test_api_gap_repairs` | 12 tests OK (new DB-free contracts) |
+| `test_reporting_source` / `test_arabic_translation_source` | OK (no regression) |
+| `bench --site cardboard.localhost run-tests --app cardboard_management --skip-before-tests --skip-test-records` | **Ran 288 tests — OK (skipped=3)** |
+| Live probes (dev proxy) | `sales.get_create_capabilities`, windowed statement, Arabic message — all confirmed |
+| Live probes (production-shaped origin, built bundle) | session, caps, statement window, inventory, settings — all confirmed |
 
-* list rows: `creation` (supply, sales, expense, payment)
-* reports / inventory: `scope`, `activity`, `items`, `item_groups`
-* supplier schema: `editable_fields`, `server_owned_fields` (Nova maps `system_managed_fields` → read-only)
-* `get_operations_summary`: nested `inventory_movement` (Nova uses the dedicated movement endpoint)
-
-## Endpoints verified live (all app-owned methods the UI uses)
-
-`suppliers` list/get/schema/capabilities/create · `supply` list/get/create/capabilities/create-capabilities/preview/print-action ·
-`sales` list/get/create/lookup-buyers/lookup-items · `supplier_payments` list/get/schema/context/lookup-suppliers/lookup-modes/create ·
-`expenses` list/get/schema/categories/sources/create · `inventory.get_inventory_overview` ·
-`reporting` operations/movement/expense-summary/supplier-summary/supplier-statement ·
-`operational_settings` get + all five lookups · `session.get_session_context`.
+Backend changes are additive only: no schema change, so **no `bench migrate` was required** (and none was run).

@@ -1,4 +1,5 @@
 import type { Page } from './index'
+import type { SupplierStatementReport } from './reports'
 
 export type SupplierType = 'Company' | 'Individual' | 'Partnership'
 
@@ -44,6 +45,8 @@ export interface SupplierSummary {
   supplierPayments: number
   outstanding: number
   outstandingSemantics: string
+  /** Server-stated: history and totals cover submitted documents only. */
+  submittedOnly: boolean
   supplyHistory: Array<{ supply: string; postingDate: string; item: string; itemName: string; payableWeight: number; value: number }>
   paymentHistory: Array<{ payment: string; postingDate: string; amount: number; modeOfPayment?: string }>
 }
@@ -71,5 +74,5 @@ export interface SupplierService {
   create(input: CreateSupplierRequest): Promise<SupplierDetail>
   capabilities(name?: string): Promise<{ capabilities: SupplierCapabilities }>
   summary(name: string, fromDate?: string, toDate?: string): Promise<SupplierSummary>
-  statement(name: string, fromDate?: string, toDate?: string): Promise<SupplierSummary>
+  statement(name: string, fromDate?: string, toDate?: string, page?: number, pageSize?: number): Promise<SupplierStatementReport>
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { SUPPLIER_CAPS, SUPPLIER_DETAIL, SUPPLIER_LIST, SUPPLIER_SCHEMA } from './__fixtures__/observed'
+import { REPORT_SUPPLIER_STATEMENT, SUPPLIER_CAPS, SUPPLIER_DETAIL, SUPPLIER_LIST, SUPPLIER_SCHEMA } from './__fixtures__/observed'
 import { createRecordingTransport } from './__fixtures__/rpc'
 import { createSupplierService } from './supplier'
 
@@ -64,5 +64,45 @@ describe('supplier service against captured live payloads', () => {
     expect(calls[0].method).toBe(`${API}.get_capabilities`)
     expect(caps.capabilities.canCreate).toBe(SUPPLIER_CAPS.capabilities.can_create)
     expect(caps.capabilities.canRead).toBe(SUPPLIER_CAPS.capabilities.can_read)
+  })
+
+  it('reads the server-owned merged statement window', async () => {
+    const { rpc, calls } = createRecordingTransport(REPORT_SUPPLIER_STATEMENT)
+    const supplier = REPORT_SUPPLIER_STATEMENT.supplier.name
+
+    const report = await createSupplierService(rpc).statement(supplier, undefined, undefined, 1, 200)
+
+    expect(calls[0].method).toBe('cardboard_management.reporting.get_supplier_statement')
+    expect(calls[0].args).toMatchObject({ supplier, page: 1, page_size: 200 })
+    expect(report.entries).toHaveLength(REPORT_SUPPLIER_STATEMENT.entries.length)
+    expect(report.entries[0]?.type).toBe(REPORT_SUPPLIER_STATEMENT.entries[0].type)
+    expect(report.entries[0]?.name).toBe(REPORT_SUPPLIER_STATEMENT.entries[0].name)
+    expect(report.entries[0]?.postingDate).toBe(REPORT_SUPPLIER_STATEMENT.entries[0].posting_date)
+    expect(report.entries[0]?.amount).toBe(REPORT_SUPPLIER_STATEMENT.entries[0].amount)
+    expect(report.page).toBe(REPORT_SUPPLIER_STATEMENT.page)
+    expect(report.pageSize).toBe(REPORT_SUPPLIER_STATEMENT.page_size)
+    expect(report.total).toBe(REPORT_SUPPLIER_STATEMENT.total)
+    expect(report.hasMore).toBe(REPORT_SUPPLIER_STATEMENT.has_more)
+    // The submitted-only rule is stated by the server, not hardcoded in the UI.
+    expect(report.submittedOnly).toBe(REPORT_SUPPLIER_STATEMENT.submitted_only)
+    // The summary numbers travel with the statement so one call fills the screen.
+    expect(report.currentOutstanding).toBe(REPORT_SUPPLIER_STATEMENT.outstanding)
+    expect(report.suppliedValue).toBe(REPORT_SUPPLIER_STATEMENT.supply_value)
+  })
+
+  it('still shows a statement when the server predates the window fields', async () => {
+    const { rpc } = createRecordingTransport({
+      ...REPORT_SUPPLIER_STATEMENT,
+      page: undefined,
+      page_size: undefined,
+      total: undefined,
+      has_more: undefined,
+    })
+
+    const report = await createSupplierService(rpc).statement('SUP-0001')
+
+    expect(report.page).toBe(1)
+    expect(report.pageSize).toBe(REPORT_SUPPLIER_STATEMENT.entries.length)
+    expect(report.hasMore).toBe(false)
   })
 })

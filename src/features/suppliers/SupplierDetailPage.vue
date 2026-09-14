@@ -18,7 +18,10 @@ import LoadingState from '@/components/feedback/LoadingState.vue'
 import type { TableColumn } from '@/components/data/table-column'
 import { useServices } from '@/services'
 import { errorMessage } from '@/services/api/errors'
-import type { SupplierDetail, SupplierSummary } from '@/services/contracts'
+import type { SupplierDetail, SupplierStatementReport, SupplierSummary } from '@/services/contracts'
+
+/** Matches the server window so the first page is never re-requested. */
+const STATEMENT_PAGE_SIZE = 200
 
 const route = useRoute()
 const router = useRouter()
@@ -27,7 +30,8 @@ const api = useServices().suppliers
 const supplierId = computed(() => String(route.params.id))
 const supplier = ref<SupplierDetail | null>(null)
 const summary = ref<SupplierSummary | null>(null)
-const statement = ref<SupplierSummary | null>(null)
+const statement = ref<SupplierStatementReport | null>(null)
+const statementLoading = ref(false)
 const loading = ref(true)
 const error = ref('')
 const activeTab = ref('overview')
@@ -54,15 +58,23 @@ const paymentColumns: readonly TableColumn[] = [
   { key: 'amount', label: 'المبلغ', align: 'end' },
 ]
 
+/** The server owns the merged timeline; the UI only presents it. */
 const statementEntries = computed<TimelineEntry[]>(() =>
-  (statement.value?.paymentHistory ?? []).map((entry) => ({
-    id: entry.payment,
-    type: 'payment' as const,
-    title: entry.modeOfPayment ? `دفعة · ${entry.modeOfPayment}` : 'دفعة مورد',
+  (statement.value?.entries ?? []).map((entry) => ({
+    id: entry.name,
+    type: entry.type,
+    title: entry.type === 'payment' ? (entry.modeOfPayment ? `دفعة مورد · ${entry.modeOfPayment}` : 'دفعة مورد') : entry.label,
     date: entry.postingDate,
-    amount: entry.amount,
+    amount: entry.type === 'supply' ? (entry.quantity ?? entry.amount) : entry.amount,
+    amountKind: entry.type === 'supply' ? 'quantity' : 'money',
+    unit: 'Kg',
+    meta: entry.type === 'payment' ? undefined : 'توريدة',
   })),
 )
+
+const statementHasMore = computed(() => Boolean(statement.value?.hasMore))
+const statementShown = computed(() => statement.value?.entries.length ?? 0)
+const statementTotal = computed(() => statement.value?.total ?? 0)
 
 async function load(): Promise<void> {
   loading.value = true
@@ -74,18 +86,32 @@ async function load(): Promise<void> {
   loading.value = false
 }
 
-async function selectTab(id: string): Promise<void> {
-  activeTab.value = id
-  if (id !== 'statement') return
+async function loadStatement(page = 1): Promise<void> {
+  statementLoading.value = true
+  error.value = ''
   try {
-    statement.value = await api.statement(supplierId.value)
+    const report = await api.statement(supplierId.value, undefined, undefined, page, STATEMENT_PAGE_SIZE)
+    statement.value =
+      page === 1 || !statement.value ? report : { ...report, entries: [...statement.value.entries, ...report.entries] }
   } catch (value) {
     error.value = errorMessage(value, 'تعذر تحميل كشف الحساب.')
+  } finally {
+    statementLoading.value = false
   }
 }
 
-/** The supplier summary/statement count submitted documents only. */
-const historyNote = 'المؤشرات والتوريدات والدفعات تعرض السجلات المعتمدة فقط؛ المسودات لا تظهر هنا.'
+async function selectTab(id: string): Promise<void> {
+  activeTab.value = id
+  if (id !== 'statement') return
+  await loadStatement(1)
+}
+
+/** Driven by the server flag, so the rule is stated in exactly one place. */
+const historyNote = computed(() =>
+  summary.value?.submittedOnly === false
+    ? 'المؤشرات تشمل كل السجلات.'
+    : 'المؤشرات والتوريدات والدفعات تعرض السجلات المعتمدة فقط؛ المسودات لا تظهر هنا.',
+)
 
 onMounted(load)
 </script>
@@ -167,9 +193,18 @@ onMounted(load)
         </DataTable>
       </template>
 
-      <AppPanel v-else title="كشف الحساب" description="كشف مبني على بيانات الخادم المعتمدة.">
-        <DataTimeline v-if="statementEntries.length" :entries="statementEntries" />
-        <p v-else class="muted">لا توجد حركات في كشف الحساب خلال الفترة الافتراضية.</p>
+      <AppPanel v-else title="كشف الحساب" description="كشف مبني على بيانات الخادم المعتمدة: التوريدات والدفعات في تسلسل واحد.">
+        <LoadingState v-if="statementLoading && !statement" message="جارٍ تحميل كشف الحساب…" />
+        <template v-else>
+          <DataTimeline v-if="statementEntries.length" :entries="statementEntries" />
+          <p v-else class="muted">لا توجد حركات في كشف الحساب خلال الفترة الافتراضية.</p>
+          <div v-if="statementTotal" class="row faint" style="justify-content: space-between">
+            <span>معروض {{ statementShown }} من {{ statementTotal }} حركة</span>
+            <AppButton v-if="statementHasMore" variant="secondary" icon="refresh" :busy="statementLoading" @click="loadStatement((statement?.page ?? 1) + 1)">
+              عرض المزيد
+            </AppButton>
+          </div>
+        </template>
       </AppPanel>
     </template>
   </section>

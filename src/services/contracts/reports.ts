@@ -18,6 +18,12 @@ export interface SupplierSummaryFilter extends DateRangeFilter {
   supplier: string
 }
 
+/** The statement timeline is windowed by the server, so it carries a page too. */
+export interface SupplierStatementFilter extends SupplierSummaryFilter {
+  page?: number
+  pageSize?: number
+}
+
 export interface OperationsSummaryReport {
   fromDate: string
   toDate: string
@@ -63,6 +69,8 @@ export interface SupplierSummaryReport {
   suppliedValue: number
   paidAmount: number
   currentOutstanding: number
+  /** Server-stated: the totals cover submitted documents only. */
+  submittedOnly: boolean
 }
 
 export interface SupplierStatementEntry {
@@ -77,6 +85,10 @@ export interface SupplierStatementEntry {
 
 export interface SupplierStatementReport extends SupplierSummaryReport {
   entries: SupplierStatementEntry[]
+  page: number
+  pageSize: number
+  total: number
+  hasMore: boolean
 }
 
 export interface SuppliesReportFilter extends DateRangeFilter {
@@ -139,7 +151,7 @@ export interface ReportService {
   movement(filter: InventoryMovementFilter): Promise<InventoryMovementReport>
   expenses(filter: DateRangeFilter): Promise<ExpenseSummaryReport>
   supplierSummary(filter: SupplierSummaryFilter): Promise<SupplierSummaryReport>
-  supplierStatement(filter: SupplierSummaryFilter): Promise<SupplierStatementReport>
+  supplierStatement(filter: SupplierStatementFilter): Promise<SupplierStatementReport>
   supplies(filter: SuppliesReportFilter): Promise<SuppliesReport>
   sales(filter: SalesReportFilter): Promise<SalesReport>
 }

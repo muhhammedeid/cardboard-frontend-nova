@@ -225,6 +225,11 @@ export const SALES_ITEMS = {
   ]
 }
 
+export const SALES_CREATE_CAPS = {
+  "can_create": true,
+  "can_submit": true
+}
+
 export const SUPPLIER_LIST = {
   "data": [
     {
@@ -898,6 +903,7 @@ export const REPORT_SUPPLIER_STATEMENT = {
   "supplier_payments": 0.0,
   "outstanding": 100.0,
   "outstanding_semantics": "current_erpnext_purchase_invoice_outstanding",
+  "submitted_only": true,
   "supply_history": [
     {
       "supply": "CS-2026-00009",
@@ -918,7 +924,11 @@ export const REPORT_SUPPLIER_STATEMENT = {
       "quantity": 100.0,
       "amount": 100.0
     }
-  ]
+  ],
+  "page": 1,
+  "page_size": 2,
+  "total": 1,
+  "has_more": false
 }
 
 export const REPORT_NEW_SUPPLIER_SUMMARY = {
@@ -970,6 +980,21 @@ export const REPORT_NEW_SUPPLIER_STATEMENT = {
   "supply_history": [],
   "payment_history": [],
   "entries": []
+}
+
+export const ERROR_FUTURE_DATE = {
+  "exception": "frappe.exceptions.ValidationError: لا يمكن أن يكون تاريخ النهاية في المستقبل",
+  "exc_type": "ValidationError",
+  "_exc_source": "cardboard_management (app)",
+  "exc": "[\"Traceback (most recent call last):\\n  File \\\"apps/frappe/frappe/app.py\\\", line 157, in application\\n    response = frappe.api.handle(request)\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/__init__.py\\\", line 52, in handle\\n    data = endpoint(**arguments)\\n           ^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/v1.py\\\", line 40, in handle_rpc_call\\n    return frappe.handler.handle()\\n           ^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 53, in handle\\n    data = execute_cmd(cmd)\\n           ^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 86, in execute_cmd\\n    return frappe.call(method, **frappe.form_dict)\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 1772, in call\\n    return fn(*args, **newargs)\\n           ^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/utils/typing_validations.py\\\", line 32, in wrapper\\n    return func(*args, **kwargs)\\n           ^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/cardboard_management/cardboard_management/reporting.py\\\", line 616, in get_inventory_movement\\n    filters = _context(\\n              ^^^^^^^^^\\n  File \\\"apps/cardboard_management/cardboard_management/reporting.py\\\", line 62, in _context\\n    start, end = _date_range(from_date, to_date)\\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/cardboard_management/cardboard_management/reporting.py\\\", line 34, in _date_range\\n    frappe.throw(_(\\\"To Date cannot be in the future\\\"))\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 621, in throw\\n    msgprint(\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 586, in msgprint\\n    _raise_exception()\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 537, in _raise_exception\\n    raise exc\\nfrappe.exceptions.ValidationError: \\u0644\\u0627 \\u064a\\u0645\\u0643\\u0646 \\u0623\\u0646 \\u064a\\u0643\\u0648\\u0646 \\u062a\\u0627\\u0631\\u064a\\u062e \\u0627\\u0644\\u0646\\u0647\\u0627\\u064a\\u0629 \\u0641\\u064a \\u0627\\u0644\\u0645\\u0633\\u062a\\u0642\\u0628\\u0644\\n\"]",
+  "_server_messages": "[\"{\\\"message\\\": \\\"\\\\u0644\\\\u0627 \\\\u064a\\\\u0645\\\\u0643\\\\u0646 \\\\u0623\\\\u0646 \\\\u064a\\\\u0643\\\\u0648\\\\u0646 \\\\u062a\\\\u0627\\\\u0631\\\\u064a\\\\u062e \\\\u0627\\\\u0644\\\\u0646\\\\u0647\\\\u0627\\\\u064a\\\\u0629 \\\\u0641\\\\u064a \\\\u0627\\\\u0644\\\\u0645\\\\u0633\\\\u062a\\\\u0642\\\\u0628\\\\u0644\\\", \\\"title\\\": \\\"\\\\u0631\\\\u0633\\\\u0627\\\\u0644\\\\u0629\\\", \\\"indicator\\\": \\\"red\\\", \\\"raise_exception\\\": 1, \\\"__frappe_exc_id\\\": \\\"2f051196013dfd43f0470b860928ecb2ee368c743f6a15df2accb0be\\\"}\"]"
+}
+
+export const ERROR_STALE_MODULE = {
+  "exception": "frappe.exceptions.ValidationError: فشل الحصول على طريقة للأمر cardboard_management.api.supply.list_supplies مع No module named 'cardboard_management.api.supply'",
+  "exc_type": "ValidationError",
+  "exc": "[\"Traceback (most recent call last):\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 75, in execute_cmd\\n    method = get_attr(cmd)\\n             ^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 308, in get_attr\\n    method = frappe.get_attr(cmd)\\n             ^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 1762, in get_attr\\n    return getattr(get_module(modulename), methodname)\\n                   ^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 1472, in get_module\\n    return importlib.import_module(modulename)\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/importlib/__init__.py\\\", line 90, in import_module\\n    return _bootstrap._gcd_import(name[level:], package, level)\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"<frozen importlib._bootstrap>\\\", line 1387, in _gcd_import\\n  File \\\"<frozen importlib._bootstrap>\\\", line 1360, in _find_and_load\\n  File \\\"<frozen importlib._bootstrap>\\\", line 1324, in _find_and_load_unlocked\\nModuleNotFoundError: No module named 'cardboard_management.api.supply'\\n\\nDuring handling of the above exception, another exception occurred:\\n\\nTraceback (most recent call last):\\n  File \\\"apps/frappe/frappe/app.py\\\", line 157, in application\\n    response = frappe.api.handle(request)\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/__init__.py\\\", line 52, in handle\\n    data = endpoint(**arguments)\\n           ^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/v1.py\\\", line 40, in handle_rpc_call\\n    return frappe.handler.handle()\\n           ^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 53, in handle\\n    data = execute_cmd(cmd)\\n           ^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 77, in execute_cmd\\n    frappe.throw(_(\\\"Failed to get method for command {0} with {1}\\\").format(cmd, str(e)))\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 621, in throw\\n    msgprint(\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 586, in msgprint\\n    _raise_exception()\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 537, in _raise_exception\\n    raise exc\\nfrappe.exceptions.ValidationError: \\u0641\\u0634\\u0644 \\u0627\\u0644\\u062d\\u0635\\u0648\\u0644 \\u0639\\u0644\\u0649 \\u0637\\u0631\\u064a\\u0642\\u0629 \\u0644\\u0644\\u0623\\u0645\\u0631 cardboard_management.api.supply.list_supplies \\u0645\\u0639 No module named 'cardboard_management.api.supply'\\n\"]",
+  "_server_messages": "[\"{\\\"message\\\": \\\"\\\\u0641\\\\u0634\\\\u0644 \\\\u0627\\\\u0644\\\\u062d\\\\u0635\\\\u0648\\\\u0644 \\\\u0639\\\\u0644\\\\u0649 \\\\u0637\\\\u0631\\\\u064a\\\\u0642\\\\u0629 \\\\u0644\\\\u0644\\\\u0623\\\\u0645\\\\u0631 cardboard_management.api.supply.list_supplies \\\\u0645\\\\u0639 No module named 'cardboard_management.api.supply'\\\", \\\"title\\\": \\\"\\\\u0631\\\\u0633\\\\u0627\\\\u0644\\\\u0629\\\", \\\"indicator\\\": \\\"red\\\", \\\"raise_exception\\\": 1, \\\"__frappe_exc_id\\\": \\\"e867061727bbe0e4b8f760e773d9c4885ad60aa12670ccf36e7e91c2\\\"}\"]"
 }
 
 export const SETTINGS = {

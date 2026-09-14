@@ -11,6 +11,7 @@ import type {
   SalesReport,
   SalesReportFilter,
   SupplierStatementReport,
+  SupplierStatementFilter,
   SupplierSummaryFilter,
   SupplierSummaryReport,
   SuppliesReport,
@@ -148,25 +149,29 @@ export function createMockReportService(scenario: ReportMockScenario = {}): Repo
       if (mode === 'error') fail()
       const base = { supplier: { name: filter.supplier, nameLabel: 'مصنع النور للكرتون' }, ...range(filter) }
       if (mode === 'empty') {
-        return { ...base, supplyCount: 0, suppliedPayableWeight: 0, suppliedValue: 0, paidAmount: 0, currentOutstanding: 0 }
+        return { ...base, supplyCount: 0, suppliedPayableWeight: 0, suppliedValue: 0, paidAmount: 0, currentOutstanding: 0, submittedOnly: true }
       }
-      return { ...base, supplyCount: 12, suppliedPayableWeight: 48250, suppliedValue: 313625, paidAmount: 286345, currentOutstanding: 27280 }
+      return { ...base, supplyCount: 12, suppliedPayableWeight: 48250, suppliedValue: 313625, paidAmount: 286345, currentOutstanding: 27280, submittedOnly: true }
     },
-    async supplierStatement(filter: SupplierSummaryFilter): Promise<SupplierStatementReport> {
+    async supplierStatement(filter: SupplierStatementFilter): Promise<SupplierStatementReport> {
       await delay()
       const mode = scenarioFor(scenario, 'supplierStatement')
       if (mode === 'error') fail()
       const base = { supplier: { name: filter.supplier, nameLabel: 'مصنع النور للكرتون' }, ...range(filter) }
+      const window = { page: 1, pageSize: 200, submittedOnly: true }
       if (mode === 'empty') {
-        return { ...base, supplyCount: 0, suppliedPayableWeight: 0, suppliedValue: 0, paidAmount: 0, currentOutstanding: 0, entries: [] }
+        return { ...base, ...window, supplyCount: 0, suppliedPayableWeight: 0, suppliedValue: 0, paidAmount: 0, currentOutstanding: 0, total: 0, hasMore: false, entries: [] }
       }
       return {
         ...base,
+        ...window,
         supplyCount: 3,
         suppliedPayableWeight: 17510,
         suppliedValue: 121215,
         paidAmount: 36000,
         currentOutstanding: 27280,
+        total: 5,
+        hasMore: false,
         entries: [
           { type: 'supply', name: 'CS-2026-0143', postingDate: '2026-09-14', label: 'كرتون دوبلكس 300 جرام', quantity: 5120, amount: 33280 },
           { type: 'payment', name: 'CSP-2026-0031', postingDate: '2026-09-14', label: 'تحويل بنكي', amount: 15000, modeOfPayment: 'تحويل بنكي' },

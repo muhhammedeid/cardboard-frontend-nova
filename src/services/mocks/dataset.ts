@@ -348,6 +348,7 @@ export const mockSupplierSummary: SupplierSummary = {
   supplierPayments: 286345,
   outstanding: 27280,
   outstandingSemantics: 'current_erpnext_purchase_invoice_outstanding',
+  submittedOnly: true,
   supplyHistory: [
     { supply: 'CS-2026-0143', postingDate: '2026-09-14', item: 'CARD-DUPLEX-300', itemName: 'كرتون دوبلكس 300 جرام', payableWeight: 5120, value: 33280 },
     { supply: 'CS-2026-0141', postingDate: '2026-09-13', item: 'CARD-WHITE-250', itemName: 'كرتون أبيض مطبوع 250 جرام', payableWeight: 7400, value: 55500 },

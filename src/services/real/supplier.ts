@@ -1,5 +1,15 @@
 import type { RpcTransport } from '@/services/api/frappe-rpc'
-import type { SupplierDetail, SupplierListItem, SupplierPage, SupplierSchema, SupplierService, SupplierSummary, SupplierType } from '@/services/contracts'
+import type {
+  SupplierDetail,
+  SupplierListItem,
+  SupplierPage,
+  SupplierSchema,
+  SupplierService,
+  SupplierStatementEntry,
+  SupplierStatementReport,
+  SupplierSummary,
+  SupplierType,
+} from '@/services/contracts'
 
 const API = 'cardboard_management.cardboard_management.api.suppliers'
 
@@ -49,8 +59,25 @@ interface RawSummary {
   supplier_payments: number
   outstanding: number
   outstanding_semantics?: string
+  submitted_only?: boolean
   supply_history?: Array<{ supply: string; posting_date: string; item: string; item_name: string; payable_weight: number; value: number }>
   payment_history?: Array<{ payment: string; posting_date: string; amount: number; mode_of_payment?: string }>
+}
+
+interface RawStatementWindow extends RawSummary {
+  entries?: Array<{
+    type: SupplierStatementEntry['type']
+    posting_date: string
+    name: string
+    label: string
+    quantity?: number
+    amount: number
+    mode_of_payment?: string
+  }>
+  page?: number
+  page_size?: number
+  total?: number
+  has_more?: boolean
 }
 
 const mapSummary = (raw: RawSummary): SupplierSummary => ({
@@ -63,6 +90,7 @@ const mapSummary = (raw: RawSummary): SupplierSummary => ({
   supplierPayments: raw.supplier_payments,
   outstanding: raw.outstanding,
   outstandingSemantics: raw.outstanding_semantics ?? '',
+  submittedOnly: raw.submitted_only ?? true,
   supplyHistory: (raw.supply_history ?? []).map((row) => ({
     supply: row.supply,
     postingDate: row.posting_date,
@@ -78,6 +106,37 @@ const mapSummary = (raw: RawSummary): SupplierSummary => ({
     modeOfPayment: row.mode_of_payment,
   })),
 })
+
+/** The statement is the server's merged timeline, windowed by page. */
+const mapStatement = (raw: RawStatementWindow): SupplierStatementReport => {
+  const entries = (raw.entries ?? []).map((entry) => ({
+    type: entry.type,
+    name: entry.name,
+    postingDate: entry.posting_date,
+    label: entry.label,
+    quantity: entry.quantity,
+    amount: entry.amount,
+    modeOfPayment: entry.mode_of_payment,
+  }))
+  const summary = mapSummary(raw)
+
+  return {
+    supplier: { name: summary.supplier.name, nameLabel: summary.supplier.supplierName },
+    fromDate: summary.fromDate,
+    toDate: summary.toDate,
+    supplyCount: summary.supplyCount,
+    suppliedPayableWeight: summary.suppliedPayableWeight,
+    suppliedValue: summary.supplyValue,
+    paidAmount: summary.supplierPayments,
+    currentOutstanding: summary.outstanding,
+    submittedOnly: summary.submittedOnly,
+    entries,
+    page: raw.page ?? 1,
+    pageSize: raw.page_size ?? entries.length,
+    total: raw.total ?? entries.length,
+    hasMore: Boolean(raw.has_more),
+  }
+}
 
 export function createSupplierService(transport: RpcTransport): SupplierService {
   return {
@@ -145,12 +204,14 @@ export function createSupplierService(transport: RpcTransport): SupplierService 
         }),
       )
     },
-    async statement(name, fromDate, toDate) {
-      return mapSummary(
-        await transport.call<RawSummary>('cardboard_management.reporting.get_supplier_statement', {
+    async statement(name, fromDate, toDate, page, pageSize) {
+      return mapStatement(
+        await transport.call<RawStatementWindow>('cardboard_management.reporting.get_supplier_statement', {
           supplier: name,
           from_date: fromDate,
           to_date: toDate,
+          page,
+          page_size: pageSize,
         }),
       )
     },

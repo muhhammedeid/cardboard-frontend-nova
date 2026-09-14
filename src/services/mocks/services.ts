@@ -24,6 +24,8 @@ import type {
   SupplierDetail,
   SupplierListQuery,
   SupplierService,
+  SupplierStatementEntry,
+  SupplierStatementReport,
   SupplierSummary,
   SupplyDetail,
   SupplyInput,
@@ -410,6 +412,10 @@ export function createMockSalesService(): SalesService {
       row.capabilities = { canEdit: false, canSubmit: false, canCancel: false }
       return row
     },
+    async getCreateCapabilities() {
+      await delay()
+      return { canCreate: true, canSubmit: true }
+    },
     async getCapabilities(name) {
       await delay()
       return required(rows, name, 'البيع المطلوب غير موجود.').capabilities
@@ -474,10 +480,49 @@ export function createMockSupplierService(): SupplierService {
       const row = required(rows, name, 'المورد المطلوب غير موجود.')
       return { ...mockSupplierSummary, supplier: row, outstanding: row.name === 'SUP-0001' ? 27280 : 9150 }
     },
-    async statement(name): Promise<SupplierSummary> {
+    async statement(name, _fromDate, toDate, page = 1, pageSize = 200): Promise<SupplierStatementReport> {
       await delay()
       const row = required(rows, name, 'المورد المطلوب غير موجود.')
-      return { ...mockSupplierSummary, supplier: row, outstanding: row.name === 'SUP-0001' ? 27280 : 9150 }
+      const summary = { ...mockSupplierSummary, supplier: row, outstanding: row.name === 'SUP-0001' ? 27280 : 9150 }
+      const entries: SupplierStatementEntry[] = [
+        ...summary.supplyHistory.map((item) => ({
+          type: 'supply' as const,
+          name: item.supply,
+          postingDate: item.postingDate,
+          label: item.itemName,
+          quantity: item.payableWeight,
+          amount: item.value,
+        })),
+        ...summary.paymentHistory.map((item) => ({
+          type: 'payment' as const,
+          name: item.payment,
+          postingDate: item.postingDate,
+          label: item.modeOfPayment ?? 'دفعة مورد',
+          amount: item.amount,
+          modeOfPayment: item.modeOfPayment,
+        })),
+      ].sort((left, right) => (left.postingDate < right.postingDate ? 1 : -1))
+
+      const start = Math.max(page, 1)
+      const size = Math.min(pageSize || 200, 500)
+      const window = entries.slice((start - 1) * size, start * size)
+
+      return {
+        supplier: { name: row.name, nameLabel: row.supplierName },
+        fromDate: summary.fromDate,
+        toDate: toDate ?? summary.toDate,
+        supplyCount: summary.supplyCount,
+        suppliedPayableWeight: summary.suppliedPayableWeight,
+        suppliedValue: summary.supplyValue,
+        paidAmount: summary.supplierPayments,
+        currentOutstanding: summary.outstanding,
+        submittedOnly: summary.submittedOnly,
+        entries: window,
+        page: start,
+        pageSize: size,
+        total: entries.length,
+        hasMore: start * size < entries.length,
+      }
     },
   }
 }

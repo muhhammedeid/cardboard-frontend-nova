@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { SALES_BUYERS, SALES_DETAIL, SALES_ITEMS, SALES_LIST } from './__fixtures__/observed'
+import { SALES_BUYERS, SALES_CREATE_CAPS, SALES_DETAIL, SALES_ITEMS, SALES_LIST } from './__fixtures__/observed'
 import { createRecordingTransport } from './__fixtures__/rpc'
 import { createSalesService } from './sales'
 
@@ -60,5 +60,14 @@ describe('sales service against captured live payloads', () => {
     const items = await createSalesService(rpc).lookupItems()
 
     expect(items).toEqual(SALES_ITEMS.data.map((row) => ({ name: row.name, label: row.item_name })))
+  })
+
+  it('reads the create capability the server grants for a new sale', async () => {
+    const { rpc, calls } = createRecordingTransport(SALES_CREATE_CAPS)
+    const caps = await createSalesService(rpc).getCreateCapabilities()
+
+    expect(calls[0].method).toBe(`${API}.get_create_capabilities`)
+    expect(caps.canCreate).toBe(SALES_CREATE_CAPS.can_create)
+    expect(caps.canSubmit).toBe(SALES_CREATE_CAPS.can_submit)
   })
 })

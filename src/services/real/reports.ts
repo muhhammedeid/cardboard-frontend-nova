@@ -12,6 +12,7 @@ import type {
   SalesReportFilter,
   SupplierStatementReport,
   SupplierSummaryFilter,
+  SupplierStatementFilter,
   SupplierSummaryReport,
   SuppliesReport,
   SuppliesReportFilter,
@@ -74,6 +75,7 @@ interface RawSupplierSummary {
   supply_value: number
   supplier_payments: number
   outstanding: number
+  submitted_only?: boolean
 }
 
 interface RawSupplierStatement extends RawSupplierSummary {
@@ -81,6 +83,10 @@ interface RawSupplierStatement extends RawSupplierSummary {
     | { type: 'supply'; posting_date: string; name: string; label: string; quantity: number; amount: number }
     | { type: 'payment'; posting_date: string; name: string; label: string; amount: number; mode_of_payment: string }
   >
+  page?: number
+  page_size?: number
+  total?: number
+  has_more?: boolean
 }
 
 interface RawPage<T> {
@@ -209,13 +215,16 @@ export function createReportService(transport: RpcTransport): ReportService {
         suppliedValue: raw.supply_value,
         paidAmount: raw.supplier_payments,
         currentOutstanding: raw.outstanding,
+        submittedOnly: raw.submitted_only ?? true,
       }
     },
-    async supplierStatement(filter: SupplierSummaryFilter): Promise<SupplierStatementReport> {
+    async supplierStatement(filter: SupplierStatementFilter): Promise<SupplierStatementReport> {
       const raw = await transport.call<RawSupplierStatement>(`${REPORTING}.get_supplier_statement`, {
         supplier: filter.supplier,
         from_date: filter.fromDate,
         to_date: filter.toDate,
+        page: filter.page,
+        page_size: filter.pageSize,
       })
       return {
         supplier: { name: raw.supplier.name, nameLabel: raw.supplier.supplier_name },
@@ -226,6 +235,11 @@ export function createReportService(transport: RpcTransport): ReportService {
         suppliedValue: raw.supply_value,
         paidAmount: raw.supplier_payments,
         currentOutstanding: raw.outstanding,
+        submittedOnly: raw.submitted_only ?? true,
+        page: raw.page ?? 1,
+        pageSize: raw.page_size ?? raw.entries.length,
+        total: raw.total ?? raw.entries.length,
+        hasMore: Boolean(raw.has_more),
         entries: raw.entries.map((entry) =>
           entry.type === 'supply'
             ? {

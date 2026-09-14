@@ -34,11 +34,13 @@ const loadingRecord = ref(false)
 const busy = ref(false)
 const loadError = ref('')
 const formError = ref('')
+/** Create capability comes from the server: a create form has no document to ask. */
+const canCreate = ref(false)
 
 const form = reactive<SaleInput>({ postingDate: todayIso(), item: '', quantity: 0, ratePerKg: 0, buyerName: '', notes: '' })
 const itemOptions = computed<SelectOption[]>(() => items.value.map((option) => ({ value: option.name, label: option.label })))
-const canEdit = computed(() => (isEdit.value ? Boolean(saved.value?.capabilities.canEdit) : true))
-const canSubmit = computed(() => (isEdit.value ? Boolean(saved.value?.capabilities.canSubmit) : true))
+const canEdit = computed(() => (isEdit.value ? Boolean(saved.value?.capabilities.canEdit) : canCreate.value))
+const canSubmit = computed(() => (isEdit.value ? Boolean(saved.value?.capabilities.canSubmit) : canCreate.value))
 
 async function loadItems(): Promise<void> {
   try {
@@ -89,7 +91,9 @@ async function save(submit = false): Promise<void> {
 }
 
 onMounted(async () => {
-  await loadItems()
+  // Independent lookups: a failed capability answer must not hide the item select.
+  const [capabilitiesResult] = await Promise.allSettled([api.getCreateCapabilities(), loadItems()])
+  if (capabilitiesResult.status === 'fulfilled') canCreate.value = capabilitiesResult.value.canCreate
   if (!recordId.value) return
   loadingRecord.value = true
   try {
@@ -124,7 +128,7 @@ onMounted(async () => {
 
       <AppPanel title="بيانات البيع" description="المشتري هنا نص حر كما في سجل البيع التشغيلي.">
         <div class="form-grid">
-          <FormField label="التاريخ" required><AppInput v-model="form.postingDate" type="date" /></FormField>
+          <FormField label="التاريخ" required><AppInput v-model="form.postingDate" type="date" :max="todayIso()" /></FormField>
           <FormField
             label="نوع الكرتون"
             required
@@ -161,7 +165,9 @@ onMounted(async () => {
       <div class="form-actions">
         <AppButton v-if="canEdit" variant="primary" icon="check" :busy="busy" @click="save(false)">حفظ كمسودة</AppButton>
         <AppButton v-if="canSubmit" variant="secondary" icon="check" :busy="busy" @click="save(true)">اعتماد البيع</AppButton>
-        <p v-if="!canEdit && !canSubmit" class="field__hint">لا تملك صلاحية تحرير أو اعتماد هذا البيع.</p>
+        <p v-if="!canEdit && !canSubmit" class="field__hint">
+          {{ isEdit ? 'لا تملك صلاحية تحرير أو اعتماد هذا البيع.' : 'لا تملك صلاحية إنشاء بيع على الخادم (can_create غير مُمنوح).' }}
+        </p>
         <AppButton variant="ghost" @click="router.push('/sales')">إلغاء</AppButton>
       </div>
     </template>

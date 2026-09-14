@@ -14,4 +14,13 @@ const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 app.provide('nova.theme', theme)
+
+/**
+ * Last line of defence: an error Vue could not catch in a component still leaves a
+ * trace for the operator's support ticket instead of failing silently.
+ */
+app.config.errorHandler = (error, _instance, info) => {
+  console.error('[nova] unhandled error', info, error)
+}
+
 app.mount('#app')

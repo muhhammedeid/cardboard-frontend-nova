@@ -101,6 +101,10 @@ export function createSalesService(transport: RpcTransport): SalesService {
     async cancel(name) {
       return mapSale(await transport.call<RawSale>(`${API}.cancel_sale`, { name }))
     },
+    async getCreateCapabilities() {
+      const raw = await transport.call<{ can_create: boolean; can_submit: boolean }>(`${API}.get_create_capabilities`)
+      return { canCreate: Boolean(raw.can_create), canSubmit: Boolean(raw.can_submit) }
+    },
     async getCapabilities(name) {
       const raw = await transport.call<{ capabilities: { can_edit: boolean; can_submit: boolean; can_cancel: boolean } }>(
         `${API}.get_capabilities`,

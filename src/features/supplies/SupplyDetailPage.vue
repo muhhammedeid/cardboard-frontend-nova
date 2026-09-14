@@ -68,7 +68,10 @@ async function print(): Promise<void> {
   busy.value = true
   try {
     const action = await api.print(record.value.name)
-    window.open(action.url, '_blank', 'noopener')
+    // A blocked popup returns null; say so instead of silently doing nothing.
+    if (!window.open(action.url, '_blank', 'noopener')) {
+      toasts.push('منع المتصفح نافذة الطباعة. اسمح بالنوافذ المنبثقة ثم أعد المحاولة.', 'error')
+    }
   } catch (value) {
     toasts.push(errorMessage(value, 'تعذر تجهيز الطباعة.'), 'error')
   } finally {
