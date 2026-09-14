@@ -2,7 +2,7 @@
 withDefaults(
   defineProps<{
     modelValue: string | number | undefined
-    type?: 'text' | 'date' | 'number' | 'search' | 'email' | 'tel'
+    type?: 'text' | 'date' | 'number' | 'search' | 'email' | 'tel' | 'password'
     placeholder?: string
     min?: string | number
     max?: string | number

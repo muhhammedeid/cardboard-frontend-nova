@@ -928,6 +928,27 @@
   background: color-mix(in srgb, var(--danger-soft) 55%, var(--surface));
 }
 
+/* In-app sign-in on the session gate: the operator never has to leave Nova. */
+.session-gate__form {
+  display: grid;
+  gap: var(--space-3);
+  inline-size: min(100%, 22rem);
+  text-align: start;
+}
+
+.session-gate__field {
+  display: grid;
+  gap: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.session-gate__failure {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--text-sm);
+}
+
 .state--error .state__glyph {
   background: var(--danger-soft);
   color: var(--danger);
