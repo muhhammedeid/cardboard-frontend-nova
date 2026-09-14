@@ -71,7 +71,8 @@ class SpaHandler(http.server.SimpleHTTPRequestHandler):
         for route in ("/login", "/app", "/printview"):
             if self.path == route or self.path.startswith(f"{route}/") or self.path.startswith(f"{route}?"):
                 return True
-        return any(self.path.startswith(prefix) for prefix in ("/api/", "/files/", "/private/"))
+        # /assets/ is Frappe's (its stylesheets and scripts), /nova/ is the SPA bundle.
+        return any(self.path.startswith(prefix) for prefix in ("/api/", "/files/", "/private/", "/assets/"))
 
     def send_head(self):  # SPA fallback for deep links
         path = self.translate_path(self.path)

@@ -53,6 +53,11 @@ export default defineConfig({
       '/printview': { ...backendRoute },
       '/files': { ...backendRoute },
       '/private': { ...backendRoute },
+      // Frappe's own stylesheets/scripts: without this the login page (and any Desk
+      // page) reached through the dev origin renders unstyled, because Vite answers
+      // /assets/... with the SPA shell. Nova keeps nothing in public/assets, and the
+      // production bundle lives under /nova/ (see build.assetsDir).
+      '/assets': { ...backendRoute },
     },
   },
 })

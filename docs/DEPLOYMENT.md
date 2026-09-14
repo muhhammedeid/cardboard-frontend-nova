@@ -121,9 +121,13 @@ python serve.py 5200 --dist dist --proxy http://127.0.0.1:8000 --host-header car
 ## 5. التشغيل في التطوير
 
 ```bash
-npm run dev        # real mode → http://cardboard.localhost:5173 (البروكسي يمرّر /api و/login و/app و/printview)
+npm run dev        # real mode → http://cardboard.localhost:5173 (البروكسي يمرّر /api و/login و/app و/printview و/files و/private و/assets)
 npm run dev:mock   # mock mode  → http://cardboard.localhost:5180 (بلا خادم)
 ```
+
+**لماذا `/assets` بالذات؟** صفحة دخول Frappe (وأي صفحة Desk) تطلب تنسيقاتها من `/assets/frappe/...`؛ وبلا
+تمرير هذا المسار يجيب Vite بصفحة الواجهة نفسها (`200 text/html` بدل CSS) فتظهر صفحة الدخول **بلا تنسيقات وبصور
+مكسورة**. والتمرير سليم لأن Nova لا تملك شيئًا في `public/assets` (أصولها المبنية تحت `/nova/`).
 
 ## 6. قائمة تحقق النشر
 
