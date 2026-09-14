@@ -79,6 +79,36 @@ server {
   إلى نفس الشاشة (والمسار مجهّز في بروكسي التطوير أيضًا).
 - رمز CSRF يُجلب من `session.get_session_context` عبر **GET** ويُجدَّد تلقائيًا مرة واحدة إذا رفضه الخادم.
 
+### 3.1 عمر الجلسة — مضبوط الآن: **مفتوحة دائمًا**
+
+المرجع الفعلي ليس `System Settings` وحده، بل سجل `DefaultValue` بالمفتاح `session_expiry` (parent `__default`)،
+لأن `frappe.sessions.get_expiry_period()` يقرأه من `frappe.defaults.get_global_default`. حقل System Settings
+يبقى للعرض/التحقق فقط — فحدّث الاثنين معًا حتى لا يختلف ما تراه في الواجهة عمّا ينفّذه الخادم.
+
+السلوك: العمر **مهلة خمول** (`now - last_updated > expiry` تُبطل الجلسة) وتُجدَّد مع كل طلب، فالمستخدم النشط لا
+يُفصل أبدًا. القيمة الحالية `87600:00` = 10 سنوات.
+
+```bash
+S=cardboard.localhost
+# القيمة الفعّالة
+bench --site $S execute frappe.db.get_value --kwargs "{'doctype':'DefaultValue','filters':{'defkey':'session_expiry'},'fieldname':'defvalue'}"
+bench --site $S execute frappe.sessions.get_expiry_period          # "87600:00:00"
+bench --site $S execute frappe.sessions.get_expiry_in_seconds      # 315360000
+
+# التغيير (طريقة الواجهة نفسها) ثم تفريغ كاش الافتراضيات فقط — بلا إعادة تشغيل ولا إنزال جلسات
+bench --site $S execute frappe.defaults.set_default --kwargs "{'key':'session_expiry','value':'87600:00','parent':'__default'}"
+bench --site $S execute frappe.db.set_single_value --kwargs "{'doctype':'System Settings','fieldname':'session_expiry','value':'87600:00'}"
+bench --site $S execute frappe.cache_manager.clear_defaults_cache --args "['__default']"
+```
+
+- **لا تستخدم `bench clear-cache`** لتطبيق هذا التغيير: يمحو الكاش العام، والمحتاج هنا هو كاش الافتراضيات فقط.
+- للرجوع إلى 7 أيام: نفس الأمر بالقيمة `170:00`. وللإنتاج، مدة أصغر (مثلًا `720:00` = 30 يومًا) تحصر أثر
+  الجهاز المتروك مفتوحًا.
+
+> تحذير أمني مقصود: مع `87600:00` يبقى أي متصفح مسجَّل دخوله صالحًا حتى بعد سنوات من عدم الاستخدام، ما لم
+> يسجّل المستخدم خروجًا أو يُبطَل من `User` → «إبطال الجلسات». هذا مناسب لمرحلة التشغيل/الاعتماد الحالية؛
+> قرّر المدة النهائية للإنتاج بوضوح.
+
 ## 4. تشغيل معاينة بشكل الإنتاج (بلا nginx)
 
 `serve.py` يخدم حزمة مبنية ويعمل كوكيل لنفس الأصل — يمرّر `Host` ويوجّه مسارات Frappe كما في الوصفة أعلاه:
