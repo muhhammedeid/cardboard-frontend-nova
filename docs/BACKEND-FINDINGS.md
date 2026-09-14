@@ -209,3 +209,12 @@ HTTP-verb restriction. Nova fetches it with GET, which is also where the CSRF to
 Backend changes stay additive: no DocType schema change, so no `bench migrate` was required. The only schema-shaped
 artefact is the **Print Format** document, which was re-imported into the site with
 `frappe.reload_doc(module='cardboard_management', dt='print_format', dn='cardboard_supply_ticket', force=True)`.
+
+## Repository state after this pass
+
+* The retired SPA was moved out of the app repo (`frontend/` and `docs/frontend/` staged as deletions) to
+  `D:\Mohamed\cardboard-bench\legacy-frontend\` — see its `ARCHIVE-NOTE.md`. Nothing in the app, and no test,
+  referenced those files (`git grep` verified), so the app suite is unaffected.
+* The app's `cardboard_management/cardboard_management/api/` package was previously **untracked in git** (every
+  service module this frontend consumes); it is now staged with `git add`, so it can be reviewed and committed
+  alongside the wrappers it belongs to.
