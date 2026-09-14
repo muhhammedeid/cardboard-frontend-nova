@@ -114,6 +114,13 @@ but the same quantities as `inbound` / `outbound` / `net` inside every `by_item`
 both correctly (covered by a fixture-driven spec), but any new client has to learn the difference.
 Cosmetic suggestion: use one spelling in both places.
 
+## Contract nuance — `session.get_session_context` is GET-only
+
+The method declares `methods=["GET"]`, so calling it with POST answers
+`PermissionError: غير مسموح به` (a permission-looking error for what is really a method restriction). Nova
+fetches it with GET before any write, which is also where the CSRF token comes from. Worth knowing before
+debugging a "permission" report that is actually a wrong HTTP verb.
+
 ---
 
 ## Fields observed on the wire that Nova intentionally does not consume
