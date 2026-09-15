@@ -8,19 +8,30 @@
 
 const ARABIC_EGYPT_CURRENCY = 'ج.م'
 
-const moneyFormat = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-const quantityFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 3 })
+// P05-UAT-FIX04: the backend already returns authoritative whole-Kg weights and
+// whole-5-EGP money. Presentation must never show decimals for these operational
+// values — so both shared formatters render integers only (no rounding happens
+// here for real values; a stray float is presented HALF-UP to match the policy).
+const moneyFormat = new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+const quantityFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
 
 export function formatMoney(value: string | number | null | undefined, currency = ARABIC_EGYPT_CURRENCY): string {
   const numeric = Number(value)
   if (value === null || value === undefined || value === '' || !Number.isFinite(numeric)) return '—'
+  // whole-5-EGP presentation: the backend sends authoritative multiples of 5.
   return `${moneyFormat.format(numeric)} ${currency}`
 }
 
 export function formatQuantity(value: string | number | null | undefined, unit = 'Kg'): string {
   const numeric = Number(value)
   if (value === null || value === undefined || value === '' || !Number.isFinite(numeric)) return '—'
-  return `${quantityFormat.format(numeric)} ${unit}`.trim()
+  // whole-Kg presentation: HALF-UP, matching cardboard_management.rounding.round_kg
+  return `${quantityFormat.format(halfUp(numeric))} ${unit}`.trim()
+}
+
+/** Presentation-only HALF-UP; the authoritative rounding lives on the backend. */
+function halfUp(numeric: number): number {
+  return Math.sign(numeric) * Math.round(Math.abs(numeric) + Number.EPSILON * Math.abs(numeric))
 }
 
 export function formatCount(value: string | number | null | undefined): string {
