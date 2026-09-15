@@ -1466,3 +1466,18 @@
   color: var(--text-muted);
   font-size: var(--text-2xs);
 }
+
+/* Inline navigation link inside a metric card (payments header band). */
+.metric__link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.metric__link:hover {
+  text-decoration: underline;
+}

@@ -39,7 +39,8 @@ const formError = ref('')
 /** Create capability comes from the server schema; never assumed. */
 const canCreate = ref(false)
 
-const form = reactive<PaymentInput>({ supplier: String(route.query.supplier ?? ''), amount: 0, modeOfPayment: '', postingDate: '', referenceNo: '', referenceDate: '', notes: '' })
+// `supplier` and `amount` may arrive prefilled from a supply's «إجراء دفعة على هذه التوريدة».
+const form = reactive<PaymentInput>({ supplier: String(route.query.supplier ?? ''), amount: Number(route.query.amount ?? 0) || 0, modeOfPayment: '', postingDate: '', referenceNo: '', referenceDate: '', notes: '' })
 
 const supplierOptions = computed<SelectOption[]>(() =>
   suppliers.value.map((option) => ({

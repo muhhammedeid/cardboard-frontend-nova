@@ -220,7 +220,6 @@ onMounted(async () => {
   <section class="stack">
     <PageHeader
       :title="isEdit ? `توريدة ${recordId}` : 'توريدة جديدة'"
-      subtitle="الأوزان والقيم المحتسبة تُحسب على الخادم وتظهر هنا للقراءة فقط."
       eyebrow="التوريدات"
       icon="inbound"
     >
@@ -236,7 +235,7 @@ onMounted(async () => {
     <template v-else>
       <p v-if="formError" class="readonly-note readonly-note--warning" role="alert">{{ formError }}</p>
 
-      <AppPanel title="بيانات التوريدة" description="المورد ونوع الكرتون وتاريخ التوريد.">
+      <AppPanel title="بيانات التوريدة">
         <div class="form-grid">
           <FormField
             label="المورد"
@@ -266,7 +265,7 @@ onMounted(async () => {
         </div>
       </AppPanel>
 
-      <AppPanel title="الأوزان والقيمة" description="اقرأ الوزن من الميزان أو أدخله يدويًا؛ الخادم يحسب الصافي والمحتسب.">
+      <AppPanel title="الأوزان والقيمة">
         <div class="form-grid">
           <FormField label="الوزن القائم (كجم)">
             <div class="row">

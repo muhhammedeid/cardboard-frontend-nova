@@ -145,7 +145,34 @@ export interface SalesReport {
   }>
 }
 
+export interface PayablesSummary {
+  date: string
+  paidToday: { count: number; amount: number }
+  /** Current ERPNext outstanding across the installation's cardboard invoices. */
+  totalOutstanding: number
+}
+
+export interface OutstandingSupplierRow {
+  supplier: string
+  supplierName: string
+  outstanding: number
+  supplyValue: number
+  suppliedWeight: number
+  supplyCount: number
+  paidAmount: number
+  paymentCount: number
+}
+
+export interface OutstandingReport {
+  totalOutstanding: number
+  /** Server-stated: totals cover submitted documents only. */
+  submittedOnly: boolean
+  suppliers: OutstandingSupplierRow[]
+}
+
 export interface ReportService {
+  payablesSummary(date?: string): Promise<PayablesSummary>
+  outstandingReport(): Promise<OutstandingReport>
   operations(filter: DateRangeFilter): Promise<OperationsSummaryReport>
   inventory(filter: CurrentInventoryFilter): Promise<CurrentInventoryReport>
   movement(filter: InventoryMovementFilter): Promise<InventoryMovementReport>

@@ -101,7 +101,7 @@ onMounted(load)
     <template v-else-if="overview">
       <section class="metric-grid">
         <div class="metric metric--weight">
-          <header class="metric__head">إجمالي الرصيد</header>
+          <header class="metric__head">إجمالي الوزن</header>
           <p class="metric__value">
             <QuantityValue :value="overview.summary.quantity" :unit="overview.summary.uom ?? ''" />
           </p>

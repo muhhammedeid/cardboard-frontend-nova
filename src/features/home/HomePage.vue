@@ -26,6 +26,8 @@ const operations = ref<OperationsSummary | null>(null)
 const inventory = ref<InventoryOverview | null>(null)
 const operationsError = ref('')
 const inventoryError = ref('')
+/** KPI: the installation-wide supplier debt, from the app-owned payables summary. */
+const outstanding = ref<number | null>(null)
 const loading = ref(true)
 
 const stockColumns: readonly TableColumn[] = [
@@ -45,9 +47,10 @@ async function refresh(): Promise<void> {
   loading.value = true
   operationsError.value = ''
   inventoryError.value = ''
-  const [ops, stock] = await Promise.allSettled([
+  const [ops, stock, payables] = await Promise.allSettled([
     services.reporting.getOperationsSummary({ fromDate: selectedDate.value, toDate: selectedDate.value }),
     services.inventory.getOverview({ selectedDate: selectedDate.value }),
+    services.reports.payablesSummary(selectedDate.value),
   ])
   if (ops.status === 'fulfilled') operations.value = ops.value
   else {
@@ -59,6 +62,8 @@ async function refresh(): Promise<void> {
     inventory.value = null
     inventoryError.value = 'تعذر تحميل ملخص المخزون.'
   }
+  if (payables.status === 'fulfilled') outstanding.value = payables.value.totalOutstanding
+  else outstanding.value = null
   loading.value = false
 }
 
@@ -129,6 +134,13 @@ onMounted(refresh)
           <p class="metric__value"><MoneyValue :value="operations.supplierPayments.amount" /></p>
           <div class="metric__meta">
             <AppBadge tone="success" :dot="false">{{ operations.supplierPayments.count }} دفعة</AppBadge>
+          </div>
+        </button>
+        <button class="metric metric--interactive metric--money" type="button" @click="router.push('/reports/debts-tracking')">
+          <header class="metric__head">إجمالي مديونية الموردين</header>
+          <p class="metric__value"><MoneyValue :value="outstanding ?? null" /></p>
+          <div class="metric__meta">
+            <AppBadge tone="warning" :dot="false">تتبع المديونية</AppBadge>
           </div>
         </button>
         <button class="metric metric--interactive metric--warning" type="button" @click="router.push('/expenses')">

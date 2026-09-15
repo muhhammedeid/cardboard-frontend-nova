@@ -105,8 +105,12 @@ export class FrappeRpcTransport implements RpcTransport {
   }
 
   private async loadCsrfToken(): Promise<string> {
-    const response = await this.request(`/api/method/${SESSION_CONTEXT_METHOD}`, {
+    // `no-store` plus a cache-buster: a cached copy of this GET would keep handing back the
+    // token of a previous session, and every POST would then answer 403 (CSRF) — even after
+    // the built-in retry, which would reuse the same cached response.
+    const response = await this.request(`/api/method/${SESSION_CONTEXT_METHOD}?ts=${Date.now()}`, {
       method: 'GET',
+      cache: 'no-store',
       headers: { Accept: 'application/json' },
     })
     const body = (await response.json().catch(() => ({}))) as FrappeResponse<{ csrf_token?: string }>
@@ -171,8 +175,9 @@ export class FrappeRpcTransport implements RpcTransport {
    * the CSRF token, so the token from this response is cached for the next POST.
    */
   async sessionContext(): Promise<SessionContext> {
-    const response = await this.request(`/api/method/${SESSION_CONTEXT_METHOD}`, {
+    const response = await this.request(`/api/method/${SESSION_CONTEXT_METHOD}?ts=${Date.now()}`, {
       method: 'GET',
+      cache: 'no-store',
       headers: { Accept: 'application/json' },
     })
     const body = (await response.json().catch(() => ({}))) as FrappeResponse<{

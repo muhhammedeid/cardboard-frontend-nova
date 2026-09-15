@@ -6,8 +6,6 @@ import AppButton from '@/components/base/AppButton.vue'
 import AppInput from '@/components/base/AppInput.vue'
 import AppSelect, { type SelectOption } from '@/components/base/AppSelect.vue'
 import FormField from '@/components/base/FormField.vue'
-import AppPanel from '@/components/data/AppPanel.vue'
-import FactsList from '@/components/data/FactsList.vue'
 import EmptyState from '@/components/feedback/EmptyState.vue'
 import ErrorState from '@/components/feedback/ErrorState.vue'
 import LoadingState from '@/components/feedback/LoadingState.vue'
@@ -36,6 +34,7 @@ const renderers: Record<ReportKey, ReturnType<typeof defineAsyncComponent>> = {
   'expense-summary': defineAsyncComponent(() => import('./components/ExpenseSummaryReport.vue')),
   'supplier-summary': defineAsyncComponent(() => import('./components/SupplierSummaryReport.vue')),
   'supplier-statement': defineAsyncComponent(() => import('./components/SupplierStatementReport.vue')),
+  'debts-tracking': defineAsyncComponent(() => import('./components/DebtsTrackingReport.vue')),
   supplies: defineAsyncComponent(() => import('./components/SuppliesReport.vue')),
   sales: defineAsyncComponent(() => import('./components/SalesReport.vue')),
 }
@@ -78,6 +77,7 @@ async function load(): Promise<void> {
       'supplier-statement': () => services.reports.supplierStatement({ ...filter, supplier: filter.supplier ?? '' }),
       supplies: () => services.reports.supplies({ ...filter, item: filter.cardboardType }),
       sales: () => services.reports.sales({ ...filter, item: filter.cardboardType }),
+      'debts-tracking': () => services.reports.outstandingReport(),
     }
     result.value = await calls[current.key]()
   } catch (value) {
@@ -114,16 +114,6 @@ onMounted(async () => {
     <NotFoundState v-if="!definition" title="تقرير غير معروف" message="مفتاح التقرير غير مسجل في مركز التقارير." />
 
     <template v-else>
-      <AppPanel title="هوية التقرير" plain>
-        <FactsList
-          :facts="[
-            { label: 'التقرير', value: definition.title },
-            { label: 'النطاق', value: definition.description, wide: true },
-            { label: 'المفتاح', value: definition.key, kind: 'code' },
-          ]"
-        />
-      </AppPanel>
-
       <section class="filter-bar" aria-label="فلاتر التقرير">
         <FormField v-for="field in fields" :key="field.key" :label="field.label" :required="field.required">
           <AppSelect

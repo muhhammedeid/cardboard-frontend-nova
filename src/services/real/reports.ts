@@ -1,6 +1,9 @@
 import type { RpcTransport } from '@/services/api/frappe-rpc'
 import type {
   CurrentInventoryFilter,
+  OutstandingReport,
+  OutstandingSupplierRow,
+  PayablesSummary,
   CurrentInventoryReport,
   DateRangeFilter,
   ExpenseSummaryReport,
@@ -120,6 +123,27 @@ interface RawSalesRow {
   status: string
 }
 
+interface RawPayablesSummary {
+  date: string
+  paid_today: { count: number; amount: number }
+  outstanding: number
+}
+
+interface RawOutstandingReport {
+  total_outstanding: number
+  submitted_only?: boolean
+  suppliers: Array<{
+    supplier: string
+    supplier_name: string
+    outstanding: number
+    supply_value: number
+    supplied_weight: number
+    supply_count: number
+    paid_amount: number
+    payment_count: number
+  }>
+}
+
 export function createReportService(transport: RpcTransport): ReportService {
   return {
     async operations(filter: DateRangeFilter): Promise<OperationsSummaryReport> {
@@ -198,6 +222,33 @@ export function createReportService(transport: RpcTransport): ReportService {
         count: raw.expense_count,
         totalAmount: raw.total_expense_amount,
         categories: (raw.by_account ?? []).map((row) => ({ label: row.account_name, count: row.count, amount: row.amount })),
+      }
+    },
+    async payablesSummary(date?: string): Promise<PayablesSummary> {
+      const raw = await transport.call<RawPayablesSummary>(`${REPORTING}.get_payables_summary`, { date })
+      return {
+        date: raw.date,
+        paidToday: raw.paid_today,
+        totalOutstanding: raw.outstanding,
+      }
+    },
+    async outstandingReport(): Promise<OutstandingReport> {
+      const raw = await transport.call<RawOutstandingReport>(`${REPORTING}.get_outstanding_report`)
+      return {
+        totalOutstanding: raw.total_outstanding,
+        submittedOnly: raw.submitted_only ?? true,
+        suppliers: raw.suppliers.map(
+          (row): OutstandingSupplierRow => ({
+            supplier: row.supplier,
+            supplierName: row.supplier_name || row.supplier,
+            outstanding: row.outstanding,
+            supplyValue: row.supply_value,
+            suppliedWeight: row.supplied_weight,
+            supplyCount: row.supply_count,
+            paidAmount: row.paid_amount,
+            paymentCount: row.payment_count,
+          }),
+        ),
       }
     },
     async supplierSummary(filter: SupplierSummaryFilter): Promise<SupplierSummaryReport> {

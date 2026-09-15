@@ -21,9 +21,11 @@ import type { TableColumn } from '@/components/data/table-column'
 import { useServices } from '@/services'
 import { errorMessage } from '@/services/api/errors'
 import type { PaymentListItem, PaymentStatus, SupplierOption } from '@/services/contracts'
+import type { PayablesSummary } from '@/services/contracts/reports'
 
 const router = useRouter()
 const api = useServices().payments
+const reports = useServices().reports
 
 const columns: readonly TableColumn[] = [
   { key: 'postingDate', label: 'التاريخ' },
@@ -52,6 +54,9 @@ const total = ref(0)
 const hasMore = ref(false)
 const loading = ref(true)
 const error = ref('')
+/** Header band: today's submitted payments and the authoritative total outstanding. */
+const payablesSummary = ref<PayablesSummary | null>(null)
+const payablesFailed = ref(false)
 
 const supplierOptions = computed<SelectOption[]>(() =>
   suppliers.value.map((option) => ({ value: option.supplier, label: option.supplierName })),
@@ -109,9 +114,20 @@ function reset(): void {
   void load()
 }
 
+async function loadPayablesSummary(): Promise<void> {
+  payablesFailed.value = false
+  try {
+    payablesSummary.value = await reports.payablesSummary()
+  } catch {
+    payablesSummary.value = null
+    payablesFailed.value = true
+  }
+}
+
 onMounted(async () => {
   await loadLookups()
   await load()
+  void loadPayablesSummary()
 })
 </script>
 
@@ -122,6 +138,26 @@ onMounted(async () => {
         <AppButton variant="primary" icon="plus" @click="router.push('/payments/new')">دفعة مورد جديدة</AppButton>
       </template>
     </PageHeader>
+
+    <section class="metric-grid">
+      <div class="metric metric--success">
+        <header class="metric__head">إجمالي مدفوعات اليوم</header>
+        <p class="metric__value">
+          <MoneyValue :value="payablesSummary ? payablesSummary.paidToday.amount : null" />
+        </p>
+        <div class="metric__meta">
+          <span v-if="payablesSummary">{{ payablesSummary.paidToday.count }} دفعة معتمدة</span>
+          <span v-else-if="payablesFailed">تعذر تحميل الإجمالي.</span>
+        </div>
+      </div>
+      <div class="metric metric--warning">
+        <header class="metric__head">إجمالي مديونية الموردين</header>
+        <p class="metric__value"><MoneyValue :value="payablesSummary ? payablesSummary.totalOutstanding : null" /></p>
+        <div class="metric__meta">
+          <button class="metric__link" type="button" @click="router.push('/reports/debts-tracking')">تتبع المديونية الكاملة ←</button>
+        </div>
+      </div>
+    </section>
 
     <FilterBar label="فلاتر الدفعات">
       <FormField label="من تاريخ"><AppInput v-model="filters.fromDate" type="date" /></FormField>

@@ -9,6 +9,7 @@ export type ReportKey =
   | 'expense-summary'
   | 'supplies'
   | 'sales'
+  | 'debts-tracking'
 
 export type ReportHubGroupKey = 'operations' | 'suppliers' | 'expenses' | 'commerce'
 
@@ -94,6 +95,14 @@ export const reportDefinitions: readonly ReportDefinition[] = [
     supportsDateRange: true,
   },
   {
+    key: 'debts-tracking',
+    title: 'تتبع المديونية',
+    description: 'مديونية كل مورد بالكامل: المستحق الحالي، قيمة التوريدات، والمدفوعات.',
+    hubGroup: 'suppliers',
+    icon: 'layers',
+    supportsDateRange: false,
+  },
+  {
     key: 'sales',
     title: 'تقرير المبيعات',
     description: 'الكميات والقيمة التشغيلية.',
@@ -105,7 +114,7 @@ export const reportDefinitions: readonly ReportDefinition[] = [
 
 export const reportHubGroups: readonly ReportHubGroup[] = [
   { key: 'operations', title: 'التشغيل', description: 'مؤشرات المخزون والتشغيل اليومي.', reportKeys: ['operations-summary', 'current-inventory', 'inventory-movement'] },
-  { key: 'suppliers', title: 'الموردون والمدفوعات', description: 'ملخص المورد وكشف حسابه.', reportKeys: ['supplier-summary', 'supplier-statement'] },
+  { key: 'suppliers', title: 'الموردون والمدفوعات', description: 'ملخص المورد، كشف حسابه، وتتبع المديونية.', reportKeys: ['supplier-summary', 'supplier-statement', 'debts-tracking'] },
   { key: 'expenses', title: 'المصروفات', description: 'إجمالي المصروفات وتوزيعها.', reportKeys: ['expense-summary'] },
   { key: 'commerce', title: 'الحركة التجارية', description: 'تقارير التوريدات والمبيعات التفصيلية.', reportKeys: ['supplies', 'sales'] },
 ]

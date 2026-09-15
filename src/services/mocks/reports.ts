@@ -7,6 +7,8 @@ import type {
   InventoryMovementFilter,
   InventoryMovementReport,
   OperationsSummaryReport,
+  OutstandingReport,
+  PayablesSummary,
   ReportService,
   SalesReport,
   SalesReportFilter,
@@ -140,6 +142,43 @@ export function createMockReportService(scenario: ReportMockScenario = {}): Repo
           { label: 'نقل وشحن', count: 2, amount: 3600 },
           { label: 'صيانة', count: 1, amount: 950 },
           { label: 'كهرباء ومياه', count: 1, amount: 1600 },
+        ],
+      }
+    },
+    async payablesSummary(date?: string): Promise<PayablesSummary> {
+      await delay()
+      return {
+        date: date ?? MOCK_TODAY,
+        paidToday: { count: 1, amount: 10000 },
+        totalOutstanding: 3300,
+      }
+    },
+    async outstandingReport(): Promise<OutstandingReport> {
+      await delay()
+      return {
+        totalOutstanding: 12450,
+        submittedOnly: true,
+        suppliers: [
+          {
+            supplier: 'SUP-0001',
+            supplierName: 'مورد الورق الزراعي',
+            outstanding: 8230,
+            supplyValue: 45200,
+            suppliedWeight: 6100,
+            supplyCount: 5,
+            paidAmount: 32800,
+            paymentCount: 6,
+          },
+          {
+            supplier: 'SUP-0002',
+            supplierName: 'مؤسسة الكرتون الحديثة',
+            outstanding: 4220,
+            supplyValue: 19100,
+            suppliedWeight: 2600,
+            supplyCount: 2,
+            paidAmount: 14880,
+            paymentCount: 3,
+          },
         ],
       }
     },

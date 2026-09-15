@@ -9,6 +9,7 @@ import MoneyValue from '@/components/base/MoneyValue.vue'
 import PageHeader from '@/components/data/PageHeader.vue'
 import QuantityValue from '@/components/base/QuantityValue.vue'
 import StatusBadge from '@/components/data/StatusBadge.vue'
+import { statusPresentation } from '@/services/formatting'
 import AppDialog from '@/components/feedback/AppDialog.vue'
 import ErrorState from '@/components/feedback/ErrorState.vue'
 import LoadingState from '@/components/feedback/LoadingState.vue'
@@ -27,6 +28,11 @@ const error = ref('')
 const busy = ref(false)
 const confirmCancel = ref(false)
 const recordId = computed(() => String(route.params.id))
+
+/** Arabic display text for any backend payment/state token (presentation only). */
+function statusLabel(status: string): string {
+  return statusPresentation(status).label
+}
 
 async function load(): Promise<void> {
   error.value = ''
@@ -63,6 +69,18 @@ async function cancel(): Promise<void> {
   }
 }
 
+/** Open the payment form pre-filled with this supply's supplier and its remaining amount. */
+function newPaymentForSupply(): void {
+  if (!record.value) return
+  void router.push({
+    path: '/payments/new',
+    query: {
+      supplier: record.value.supplier,
+      amount: String(record.value.purchaseInvoiceOutstanding ?? ''),
+    },
+  })
+}
+
 async function print(): Promise<void> {
   if (!record.value) return
   busy.value = true
@@ -91,6 +109,12 @@ onMounted(load)
         <AppButton v-if="record?.capabilities.canEdit" variant="secondary" icon="settings" @click="router.push(`/supplies/${recordId}/edit`)">تحرير المسودة</AppButton>
         <AppButton v-if="record?.capabilities.canSubmit" variant="primary" icon="check" :busy="busy" @click="submit">اعتماد</AppButton>
         <AppButton v-if="record?.capabilities.canCancel" variant="danger-ghost" icon="close" :busy="busy" @click="confirmCancel = true">إلغاء التوريدة</AppButton>
+        <AppButton
+          v-if="record && record.paymentStatus && record.paymentStatus !== 'تم الدفع' && (record.purchaseInvoiceOutstanding ?? 0) > 0"
+          variant="secondary"
+          icon="payments"
+          @click="newPaymentForSupply"
+        >إجراء دفعة على هذه التوريدة</AppButton>
         <AppButton variant="ghost" icon="arrowRight" @click="router.push('/supplies')">القائمة</AppButton>
       </template>
     </PageHeader>
@@ -110,9 +134,9 @@ onMounted(load)
           <p class="metric__value"><MoneyValue :value="record.totalAmount" /></p>
           <div class="metric__meta">سعر الكيلو <MoneyValue :value="record.ratePerKg" /></div>
         </div>
-        <div class="metric" :class="record.paymentStatus === 'مدفوع' ? 'metric--success' : 'metric--warning'">
+        <div class="metric" :class="record.paymentStatus === 'تم الدفع' ? 'metric--success' : 'metric--warning'">
           <header class="metric__head">حالة الدفع</header>
-          <p class="metric__value metric__value--sm">{{ record.paymentStatus ?? 'غير متاح' }}</p>
+          <p class="metric__value metric__value--sm">{{ record.paymentStatus ? statusLabel(record.paymentStatus) : 'غير متاح' }}</p>
           <div class="metric__meta">
             <span v-if="record.integrationStatus">{{ record.integrationStatus }}</span>
           </div>
@@ -159,11 +183,10 @@ onMounted(load)
         />
       </AppPanel>
 
-      <AppPanel v-if="record.paymentStatus" title="الربط المحاسبي" description="قيم الفاتورة والمتبقي تأتي من نظام ERPNext كما هي.">
+      <AppPanel v-if="record.paymentStatus" title="الحساب">
         <FactsList
           :facts="[
-            { label: 'حالة الدفع', value: record.paymentStatus },
-            { label: 'فاتورة الشراء', value: record.purchaseInvoice ?? null, kind: 'code' },
+            { label: 'حالة الدفع', value: statusLabel(record.paymentStatus) },
             { label: 'إجمالي الفاتورة', value: record.invoiceTotal ?? null, kind: 'money' },
             { label: 'المدفوع من الفاتورة', value: record.invoicePaidAmount ?? null, kind: 'money' },
             { label: 'المتبقي على الفاتورة', value: record.purchaseInvoiceOutstanding ?? null, kind: 'money' },

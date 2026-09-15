@@ -193,4 +193,22 @@ describe('FrappeRpcTransport', () => {
     expect(error.kind).toBe('authentication')
     expect(error.status).toBe(403)
   })
+
+  it('never lets a cached session GET hand back a stale CSRF token', async () => {
+    const calls: Call[] = []
+    stub(calls, (url) => (url.includes(SESSION_CONTEXT_METHOD) ? json({ message: { user: 'u', csrf_token: 'tok' } }) : json(csrfRejected, 403)))
+
+    await new FrappeRpcTransport('').call('app.method', {}).catch(() => undefined)
+
+    const tokenCalls = calls.filter((call) => call.url.includes(SESSION_CONTEXT_METHOD))
+    // bootstrap + the single retry after the CSRF rejection
+    expect(tokenCalls).toHaveLength(2)
+    for (const call of tokenCalls) {
+      expect(call.init.method).toBe('GET')
+      // Without these the browser would replay the previous session's token and every
+      // write would answer 403 for good.
+      expect(call.init.cache).toBe('no-store')
+      expect(call.url).toMatch(/\?ts=\d+/)
+    }
+  })
 })
