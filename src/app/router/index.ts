@@ -44,11 +44,11 @@ export const routes: RouteRecordRaw[] = [
   { path: '/expenses/:id', name: 'expense-detail', component: ExpenseDetailPage, meta: { label: 'تفاصيل المصروف', area: 'expenses' } },
   { path: '/expenses/:id/edit', name: 'expense-edit', component: ExpenseFormPage, meta: { label: 'تحرير مصروف', subtitle: 'تعديل مسودة المصروف', area: 'expenses' } },
 
-  { path: '/inventory', name: 'inventory', component: InventoryPage, meta: { label: 'المخزون', subtitle: 'الرصيد المعتمد من الخادم', area: 'inventory' } },
+  { path: '/inventory', name: 'inventory', component: InventoryPage, meta: { label: 'المخزون', area: 'inventory' } },
   { path: '/inventory/history', name: 'inventory-history', component: InventoryPage, meta: { label: 'الرصيد التاريخي', subtitle: 'رصيد نهاية اليوم المختار', area: 'inventory' } },
   { path: '/inventory/movement', name: 'inventory-movement', component: MovementPage, meta: { label: 'حركة المخزون', subtitle: 'الوارد والصادر خلال الفترة', area: 'inventory' } },
 
-  { path: '/reports', name: 'reports', component: ReportsHubPage, meta: { label: 'التقارير', subtitle: 'تقارير تشغيلية معتمدة من الخادم', area: 'reports' } },
+  { path: '/reports', name: 'reports', component: ReportsHubPage, meta: { label: 'التقارير', area: 'reports' } },
   { path: '/reports/:reportKey', name: 'report-detail', component: ReportRoutePage, meta: { label: 'تقرير', area: 'reports' } },
 
   { path: '/settings', name: 'settings', component: SettingsPage, meta: { label: 'الإعدادات', subtitle: 'نطاق الشركة والمخزن والتصنيفات الافتراضية', area: 'settings' } },

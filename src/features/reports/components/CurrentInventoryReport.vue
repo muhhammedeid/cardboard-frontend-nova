@@ -44,7 +44,7 @@ const empty = () => props.report.rows.length === 0
     <EmptyState v-if="empty()" icon="inventory" title="لا يوجد رصيد" message="لا توجد أصناف أو رصيد في التاريخ المحدد." />
 
     <template v-else>
-      <AppPanel title="توزيع الرصيد بين الأصناف" description="ترتيب بصري للقيم المعتمدة من الخادم.">
+      <AppPanel title="الكمية المتاحة لكل صنف">
         <DistributionBars :rows="report.rows.map((row) => ({ label: row.itemName, amount: row.quantity, kind: 'quantity' as const }))" />
       </AppPanel>
 

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import AppIcon from '@/components/base/AppIcon.vue'
 import MoneyValue from '@/components/base/MoneyValue.vue'
 import QuantityValue from '@/components/base/QuantityValue.vue'
 
@@ -44,9 +43,5 @@ function width(row: DistributionRow): string {
       </div>
       <div class="distribution__track" aria-hidden="true"><div class="distribution__fill" :style="{ inlineSize: width(row) }" /></div>
     </div>
-    <p class="field__hint row" v-if="rows.length">
-      <AppIcon name="info" size="sm" />
-      الأشرطة تعرض ترتيب القيم المعتمدة من الخادم، وليست حسابًا في الواجهة.
-    </p>
   </div>
 </template>

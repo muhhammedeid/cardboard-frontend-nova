@@ -73,7 +73,6 @@ onMounted(load)
   <section class="stack">
     <PageHeader
       :title="historyMode ? 'الرصيد التاريخي' : 'المخزون'"
-      :subtitle="historyMode ? 'رصيد نهاية اليوم المختار كما يعتمده الخادم.' : 'لقطة الرصيد الحالية من تقرير الرصيد المعتمد.'"
       icon="inventory"
       eyebrow="المخزون"
     >
@@ -101,7 +100,7 @@ onMounted(load)
     <template v-else-if="overview">
       <section class="metric-grid">
         <div class="metric metric--weight">
-          <header class="metric__head">إجمالي الوزن</header>
+          <header class="metric__head">إجمالي الكمية</header>
           <p class="metric__value">
             <QuantityValue :value="overview.summary.quantity" :unit="overview.summary.uom ?? ''" />
           </p>
@@ -112,7 +111,6 @@ onMounted(load)
         <div class="metric metric--money">
           <header class="metric__head">قيمة المخزون</header>
           <p class="metric__value"><MoneyValue :value="overview.summary.stockValue" /></p>
-          <div class="metric__meta">قيمة معتمدة من الخادم (Stock Balance).</div>
         </div>
         <div class="metric metric--info">
           <header class="metric__head">تاريخ اللقطة</header>
@@ -129,7 +127,7 @@ onMounted(load)
       <EmptyState v-if="overview.state !== 'ok'" icon="inventory" title="لا يوجد رصيد لعرضه" :message="stateMessage" />
 
       <template v-else>
-        <AppPanel title="توزيع الرصيد بين الأصناف" description="ترتيب بصري للقيم المعتمدة من الخادم.">
+        <AppPanel title="الكمية المتاحة لكل صنف">
           <DistributionBars
             :rows="overview.rows.map((row) => ({ label: row.itemName, amount: row.quantity, kind: 'quantity' as const }))"
           />

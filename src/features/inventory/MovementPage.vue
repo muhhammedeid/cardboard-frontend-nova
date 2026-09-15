@@ -126,7 +126,6 @@ onMounted(async () => {
         <div class="metric metric--info">
           <header class="metric__head">الصافي</header>
           <p class="metric__value"><QuantityValue :value="report.net" unit="كجم" /></p>
-          <div class="metric__meta">فرق الحركة كما يعتمده الخادم.</div>
         </div>
       </section>
 

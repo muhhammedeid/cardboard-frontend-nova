@@ -136,7 +136,6 @@ onMounted(async () => {
   <section class="stack">
     <PageHeader
       :title="isEdit ? `تحرير الدفعة ${recordId}` : 'دفعة مورد جديدة'"
-      subtitle="إنشاء الدفعة يسجّل مسودة فقط؛ الترحيل المحاسبي يحدث عند الاعتماد على الخادم."
       eyebrow="المدفوعات"
       icon="payments"
     >
@@ -173,7 +172,7 @@ onMounted(async () => {
               <AppButton variant="ghost" icon="refresh" size="sm" :disabled="!form.supplier" @click="loadContext">تحديث السياق</AppButton>
             </div>
           </FormField>
-          <FormField label="المبلغ (ج.م)" required hint="لا يُسمح بتجاوز الرصيد المستحق إلا وفق قواعد الخادم.">
+          <FormField label="المبلغ (ج.م)" required hint="لا يُسمح بتجاوز الرصيد المستحق.">
             <AppInput v-model.number="form.amount" type="number" min="0" step="0.01" inputmode="decimal" />
           </FormField>
           <FormField label="طريقة الدفع" required :error="modeLookupFailed ? 'تعذر تحميل طرق الدفع المعتمدة.' : undefined">
@@ -186,14 +185,13 @@ onMounted(async () => {
         </div>
       </AppPanel>
 
-      <AppPanel title="سياق المورد" description="الرصيد الحالي يأتي من خدمة الدفعات على الخادم." plain>
+      <AppPanel title="سياق المورد" plain>
         <FactsList
           :facts="[
             { label: 'الرصيد المستحق الحالي', value: outstanding, kind: 'money' },
             { label: 'المتبقي المتوقع بعد الدفعة', value: saved?.expectedRemainingOutstanding ?? null, kind: 'money' },
           ]"
         />
-        <p class="field__hint">المتبقي المتوقع يُحسب على الخادم ويظهر بعد حفظ الدفعة.</p>
       </AppPanel>
 
       <div class="form-actions">

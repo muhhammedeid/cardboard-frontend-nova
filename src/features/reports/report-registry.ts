@@ -47,7 +47,7 @@ export const reportDefinitions: readonly ReportDefinition[] = [
   {
     key: 'current-inventory',
     title: 'رصيد المخزون',
-    description: 'لقطة الرصيد المعتمدة للمخزون في تاريخ محدد.',
+    description: 'لقطة الرصيد للمخزون في تاريخ محدد.',
     hubGroup: 'operations',
     icon: 'inventory',
     supportsDateRange: false,

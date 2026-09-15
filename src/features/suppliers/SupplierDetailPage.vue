@@ -145,7 +145,7 @@ onMounted(load)
 
     <template v-else-if="supplier">
       <section class="metric-grid">
-        <MetricCard label="الرصيد المستحق الحالي" helper="قيمة معتمدة من الخادم" tone="money" icon="payments">
+        <MetricCard label="الرصيد المستحق الحالي" tone="money" icon="payments">
           <template #value><MoneyValue :value="summary?.outstanding ?? null" /></template>
           <template #meta><span class="faint">{{ summary?.outstandingSemantics ? 'رصيد فواتير الشراء الحالي' : '' }}</span></template>
         </MetricCard>

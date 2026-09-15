@@ -8,7 +8,6 @@ import { reportHubGroups, reportsForHubGroup } from './report-registry'
   <section class="stack">
     <PageHeader
       title="مركز التقارير"
-      subtitle="تقارير تشغيلية تُبنى بالكامل على بيانات الخادم، مصنّفة حسب نطاق العمل."
       icon="reports"
       eyebrow="التقارير"
     />
