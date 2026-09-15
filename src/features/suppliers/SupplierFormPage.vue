@@ -2,7 +2,6 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import AppBadge from '@/components/data/AppBadge.vue'
 import AppButton from '@/components/base/AppButton.vue'
 import AppInput from '@/components/base/AppInput.vue'
 import AppSelect, { type SelectOption } from '@/components/base/AppSelect.vue'
@@ -35,7 +34,7 @@ const duplicateHint = ref(false)
 const canEdit = ref(isEdit.value)
 const canCreate = ref(false)
 
-const form = ref<CreateSupplierRequest>({ supplierName: '', supplierType: 'Company', taxId: '', supplierDetails: '' })
+const form = ref<CreateSupplierRequest>({ supplierName: '', supplierType: 'Individual', taxId: '', supplierDetails: '' })
 
 const typeOptions: readonly SelectOption[] = [
   { value: 'Company', label: 'شركة' },
@@ -44,7 +43,6 @@ const typeOptions: readonly SelectOption[] = [
 ]
 
 const requiredFields = computed(() => new Set(schema.value?.requiredFields ?? ['supplier_name']))
-const readOnlyFields = computed(() => schema.value?.readOnlyFields ?? [])
 const canSave = computed(() => (isEdit.value ? canEdit.value : canCreate.value))
 
 async function loadSchema(): Promise<void> {
@@ -52,7 +50,8 @@ async function loadSchema(): Promise<void> {
   try {
     const value = await api.schema()
     schema.value = value
-    if (!isEdit.value) form.value.supplierType = value.supplierTypeDefault
+    // إنشاء مورد جديد يعتمد «فرد» افتراضيًا بغض النظر عن قيمة المخطط على الخادم
+    if (!isEdit.value) form.value.supplierType = 'Individual'
     canCreate.value = true
   } catch (value) {
     schemaError.value = errorMessage(value, 'تعذر تحميل حقول المورد.')
@@ -141,7 +140,6 @@ onMounted(async () => {
 
       <AppPanel
         title="بيانات المورد"
-        :description="schema?.defaultSupplierGroup ? `المجموعة الافتراضية: ${schema.defaultSupplierGroup}` : undefined"
       >
         <form class="form-grid" @submit.prevent="save">
           <FormField label="اسم المورد" :required="requiredFields.has('supplier_name')" hint="الاسم كما سيظهر في التوريدات والكشوف.">
@@ -157,16 +155,6 @@ onMounted(async () => {
             <FormField label="ملاحظات المورد"><AppTextarea v-model="form.supplierDetails" :rows="3" :readonly="!canSave" /></FormField>
           </div>
         </form>
-      </AppPanel>
-
-      <AppPanel v-if="schema" title="حقول يديرها الخادم" description="لا تُرسل من الواجهة إطلاقًا." plain>
-        <ul class="stack-tight">
-          <li v-for="field in readOnlyFields" :key="field" class="row faint">
-            <AppBadge tone="neutral" :dot="false">محجوز</AppBadge>
-            <span class="mono">{{ field }}</span>
-          </li>
-        </ul>
-        <p class="field__hint">مجموعة المورد والحسابات والبنوك تُدار من بطاقة الجهة في ERPNext، وليست جزءًا من هذه الشاشة.</p>
       </AppPanel>
 
       <p v-if="schemaError" class="readonly-note readonly-note--warning">{{ schemaError }} يمكنك المتابعة بالحقول الأساسية.</p>

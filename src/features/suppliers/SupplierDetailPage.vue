@@ -34,7 +34,7 @@ const statement = ref<SupplierStatementReport | null>(null)
 const statementLoading = ref(false)
 const loading = ref(true)
 const error = ref('')
-const activeTab = ref('overview')
+const activeTab = ref('supplies')
 
 const tabs: readonly TabItem[] = [
   { id: 'overview', label: 'نظرة عامة' },
