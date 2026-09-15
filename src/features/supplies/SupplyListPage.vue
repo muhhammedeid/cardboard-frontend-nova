@@ -124,7 +124,7 @@ onMounted(async () => {
 
 <template>
   <section class="stack">
-    <PageHeader title="التوريدات" subtitle="توريدات الكرتون بالأوزان المحتسبة والقيم المعتمدة من الخادم." icon="inbound" eyebrow="التشغيل">
+    <PageHeader title="التوريدات" icon="inbound" eyebrow="التشغيل">
       <template #actions>
         <AppButton variant="primary" icon="plus" @click="router.push('/supplies/new')">توريدة جديدة</AppButton>
       </template>

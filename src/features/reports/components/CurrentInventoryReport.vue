@@ -25,7 +25,7 @@ const empty = () => props.report.rows.length === 0
   <section class="stack">
     <section class="metric-grid">
       <div class="metric metric--weight">
-        <header class="metric__head">إجمالي الرصيد</header>
+        <header class="metric__head">إجمالي الكمية</header>
         <p class="metric__value"><QuantityValue :value="report.summary.quantity" :unit="report.summary.uom ?? ''" /></p>
         <div class="metric__meta">{{ report.warehouseName }} · <bdi dir="ltr">{{ report.selectedDate }}</bdi></div>
       </div>

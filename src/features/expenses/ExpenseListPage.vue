@@ -102,7 +102,7 @@ onMounted(async () => {
 
 <template>
   <section class="stack">
-    <PageHeader title="المصروفات" subtitle="المصروفات التشغيلية؛ القيد المحاسبي يبقى على الخادم." icon="expenses" eyebrow="السجلات">
+    <PageHeader title="المصروفات" icon="expenses" eyebrow="السجلات">
       <template #actions>
         <AppButton variant="primary" icon="plus" @click="router.push('/expenses/new')">مصروف جديد</AppButton>
       </template>

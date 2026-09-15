@@ -94,7 +94,6 @@ onMounted(refresh)
     <section class="page-section">
       <div class="page-section__heading">
         <h2>مؤشرات اليوم</h2>
-        <p>القيم المعتمدة من الخادم للفترة المختارة.</p>
       </div>
 
       <div v-if="loading && !operations" class="metric-grid">
@@ -175,7 +174,7 @@ onMounted(refresh)
       <template v-else-if="inventory">
         <section class="metric-grid">
           <div class="metric metric--weight">
-            <header class="metric__head">إجمالي الرصيد</header>
+            <header class="metric__head">إجمالي الكمية</header>
             <p class="metric__value"><QuantityValue :value="inventory.summary.quantity" :unit="inventory.summary.uom ?? ''" /></p>
             <div class="metric__meta">{{ inventory.warehouseName }}</div>
           </div>

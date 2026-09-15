@@ -133,7 +133,7 @@ onMounted(async () => {
 
 <template>
   <section class="stack">
-    <PageHeader title="المدفوعات" subtitle="دفعات الموردين؛ الترحيل المحاسبي يبقى على الخادم." icon="payments" eyebrow="السجلات">
+    <PageHeader title="المدفوعات" icon="payments" eyebrow="السجلات">
       <template #actions>
         <AppButton variant="primary" icon="plus" @click="router.push('/payments/new')">دفعة مورد جديدة</AppButton>
       </template>

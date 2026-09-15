@@ -90,7 +90,6 @@ onMounted(load)
         <div class="metric metric--info">
           <header class="metric__head">الرصيد المستحق الحالي</header>
           <p class="metric__value"><MoneyValue :value="record.currentSupplierOutstanding ?? null" /></p>
-          <div class="metric__meta">قيمة معتمدة من الخادم وقت القراءة.</div>
         </div>
         <div class="metric metric--warning">
           <header class="metric__head">المتبقي المتوقع</header>

@@ -87,11 +87,6 @@ onMounted(load)
           <p class="metric__value"><MoneyValue :value="record.amount" /></p>
           <div class="metric__meta">{{ record.expenseCategoryName }}</div>
         </div>
-        <div class="metric metric--info">
-          <header class="metric__head">الحالة المحاسبية</header>
-          <p class="metric__value metric__value--sm">{{ record.accountingStatus ?? 'غير متاحة' }}</p>
-          <div class="metric__meta">تُدار بالكامل على الخادم.</div>
-        </div>
       </section>
 
       <AppPanel title="بيانات المصروف">

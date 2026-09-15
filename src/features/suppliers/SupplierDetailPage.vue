@@ -166,7 +166,7 @@ onMounted(load)
 
       <AppTabs :tabs="tabs" :active-id="activeTab" label="أقسام ملف المورد" @update:active-id="selectTab" />
 
-      <AppPanel v-if="activeTab === 'overview'" title="بيانات المورد" description="حقول الاتصال للقراءة فقط وتأتي من بطاقة الجهة في ERPNext.">
+      <AppPanel v-if="activeTab === 'overview'" title="بيانات المورد">
         <FactsList
           :facts="[
             { label: 'الهاتف', value: supplier.mobileNo ?? null, kind: 'code' },
@@ -196,7 +196,7 @@ onMounted(load)
         </DataTable>
       </template>
 
-      <AppPanel v-else title="كشف الحساب" description="كشف مبني على بيانات الخادم المعتمدة: التوريدات والدفعات في تسلسل واحد.">
+      <AppPanel v-else title="كشف الحساب">
         <LoadingState v-if="statementLoading && !statement" message="جارٍ تحميل كشف الحساب…" />
         <template v-else>
           <DataTimeline v-if="statementEntries.length" :entries="statementEntries" />

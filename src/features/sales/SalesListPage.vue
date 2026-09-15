@@ -117,7 +117,7 @@ onMounted(async () => {
 
 <template>
   <section class="stack">
-    <PageHeader title="المبيعات" subtitle="بيع الكرتون بالكميات والقيمة التشغيلية المعتمدة من الخادم." icon="outbound" eyebrow="التشغيل">
+    <PageHeader title="المبيعات" icon="outbound" eyebrow="التشغيل">
       <template #actions>
         <AppButton variant="primary" icon="plus" @click="router.push('/sales/new')">بيع جديد</AppButton>
       </template>
